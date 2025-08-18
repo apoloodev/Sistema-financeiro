@@ -43,6 +43,9 @@ export default function Transacoes() {
   const [searchTerm, setSearchTerm] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [dateFilter, setDateFilter] = useState('')
+  const [minValue, setMinValue] = useState('')
+  const [maxValue, setMaxValue] = useState('')
 
   const [formData, setFormData] = useState({
     quando: '',
@@ -56,14 +59,49 @@ export default function Transacoes() {
   // Transações filtradas
   const filteredTransacoes = useMemo(() => {
     return transacoes.filter(transacao => {
+      // Filtro de busca
       const matchesSearch = !searchTerm || 
         (transacao.estabelecimento?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
+      
+      // Filtro de tipo
       const matchesType = !typeFilter || transacao.tipo === typeFilter
+      
+      // Filtro de categoria
       const matchesCategory = !categoryFilter || transacao.category_id === categoryFilter
       
-      return matchesSearch && matchesType && matchesCategory
+      // Filtro de data
+      let matchesDate = true
+      if (dateFilter && transacao.quando) {
+        const transacaoDate = new Date(transacao.quando)
+        const now = new Date()
+        
+        switch (dateFilter) {
+          case 'today':
+            matchesDate = transacaoDate.toDateString() === now.toDateString()
+            break
+          case 'week':
+            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+            matchesDate = transacaoDate >= weekAgo
+            break
+          case 'month':
+            matchesDate = transacaoDate.getMonth() === now.getMonth() && 
+                         transacaoDate.getFullYear() === now.getFullYear()
+            break
+          case 'year':
+            matchesDate = transacaoDate.getFullYear() === now.getFullYear()
+            break
+        }
+      }
+      
+      // Filtro de valor mínimo
+      const matchesMinValue = !minValue || (transacao.valor || 0) >= parseFloat(minValue)
+      
+      // Filtro de valor máximo
+      const matchesMaxValue = !maxValue || (transacao.valor || 0) <= parseFloat(maxValue)
+      
+      return matchesSearch && matchesType && matchesCategory && matchesDate && matchesMinValue && matchesMaxValue
     })
-  }, [transacoes, searchTerm, typeFilter, categoryFilter])
+  }, [transacoes, searchTerm, typeFilter, categoryFilter, dateFilter, minValue, maxValue])
 
   // Cálculo dos totais
   const { receitas, despesas, saldo } = useMemo(() => {
@@ -89,6 +127,16 @@ export default function Transacoes() {
       fetchTransacoes()
     }
   }, [user?.uid]) // Removido fetchTransacoes das dependências
+
+  // Função para limpar filtros
+  const clearFilters = () => {
+    setSearchTerm('')
+    setTypeFilter('')
+    setCategoryFilter('')
+    setDateFilter('')
+    setMinValue('')
+    setMaxValue('')
+  }
 
   // Debug: Log do estado atual
   useEffect(() => {
@@ -372,6 +420,12 @@ export default function Transacoes() {
           onTypeFilterChange={setTypeFilter}
           categoryFilter={categoryFilter}
           onCategoryFilterChange={setCategoryFilter}
+          dateFilter={dateFilter}
+          onDateFilterChange={setDateFilter}
+          minValue={minValue}
+          onMinValueChange={setMinValue}
+          maxValue={maxValue}
+          onMaxValueChange={setMaxValue}
           onClearFilters={clearFilters}
         />
         {transacoes.length > 0 && (

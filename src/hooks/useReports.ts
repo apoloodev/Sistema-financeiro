@@ -70,15 +70,54 @@ export function useReports() {
     fetchTransactions()
   }, [user?.uid])
 
+  // Filtrar transações baseado nos filtros
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter(transaction => {
+      // Filtro de tipo
+      if (filters.type && transaction.tipo !== filters.type) return false
+      
+      // Filtro de categoria
+      if (filters.categoryId && transaction.category_id !== filters.categoryId) return false
+      
+      // Filtro de data
+      if (transaction.quando) {
+        const transactionDate = new Date(transaction.quando)
+        const now = new Date()
+        
+        switch (filters.period) {
+          case 'day':
+            if (transactionDate.toDateString() !== now.toDateString()) return false
+            break
+          case 'month':
+            if (transactionDate.getMonth() !== now.getMonth() || 
+                transactionDate.getFullYear() !== now.getFullYear()) return false
+            break
+          case 'year':
+            if (transactionDate.getFullYear() !== now.getFullYear()) return false
+            break
+          case 'custom':
+            if (filters.startDate && filters.endDate) {
+              const startDate = new Date(filters.startDate)
+              const endDate = new Date(filters.endDate)
+              if (transactionDate < startDate || transactionDate > endDate) return false
+            }
+            break
+        }
+      }
+      
+      return true
+    })
+  }, [transactions, filters])
+
   // Calculate summary data
   const summaryData = useMemo(() => {
-    console.log('📊 useReports: Calculando resumo com', transactions.length, 'transações')
+    console.log('📊 useReports: Calculando resumo com', filteredTransactions.length, 'transações filtradas')
     
-    const receitas = transactions
+    const receitas = filteredTransactions
       .filter(t => t.tipo === 'receita')
       .reduce((acc, t) => acc + (t.valor || 0), 0)
     
-    const despesas = transactions
+    const despesas = filteredTransactions
       .filter(t => t.tipo === 'despesa')
       .reduce((acc, t) => acc + (t.valor || 0), 0)
     
@@ -87,7 +126,7 @@ export function useReports() {
     console.log('📊 useReports: Resumo calculado - Receitas:', receitas, 'Despesas:', despesas, 'Saldo:', saldo)
 
     // Group by category
-    const byCategory = transactions.reduce((acc, transaction) => {
+    const byCategory = filteredTransactions.reduce((acc, transaction) => {
       const categoryName = transaction.category_id || 'Sem categoria'
       const valor = transaction.valor || 0
       
@@ -118,12 +157,12 @@ export function useReports() {
       saldo,
       byCategory,
       chartData,
-      totalTransactions: transactions.length
+      totalTransactions: filteredTransactions.length
     }
-  }, [transactions])
+  }, [filteredTransactions])
 
   return {
-    transactions,
+    transactions: filteredTransactions,
     isLoading,
     filters,
     setFilters,

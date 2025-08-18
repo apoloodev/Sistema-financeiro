@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,10 +8,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useAuth } from '@/hooks/useAuth'
 import { useLembretes } from '@/hooks/useLembretes'
 import { toast } from '@/hooks/use-toast'
-import { Plus, Edit, Trash2, Calendar, Clock } from 'lucide-react'
+import { Plus, Edit, Trash2, Calendar, Clock, Search, Filter } from 'lucide-react'
 
 import type { Lembrete } from '@/integrations/firebase/types'
 
@@ -29,11 +30,45 @@ export default function Lembretes() {
   } = useLembretes()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingLembrete, setEditingLembrete] = useState<Lembrete | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
   const [formData, setFormData] = useState({
     descricao: '',
     data: '',
     valor: '',
   })
+
+  // Filtrar lembretes
+  const filteredLembretes = useMemo(() => {
+    return lembretes.filter(lembrete => {
+      // Filtro de busca
+      const matchesSearch = !searchTerm || 
+        (lembrete.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
+      
+      // Filtro de status (vencido, próximo, futuro)
+      let matchesStatus = true
+      if (statusFilter && lembrete.data) {
+        const lembreteDate = new Date(lembrete.data)
+        const now = new Date()
+        
+        switch (statusFilter) {
+          case 'vencido':
+            matchesStatus = lembreteDate < now
+            break
+          case 'proximo':
+            const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+            matchesStatus = lembreteDate >= now && lembreteDate <= weekFromNow
+            break
+          case 'futuro':
+            const weekFromNow2 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+            matchesStatus = lembreteDate > weekFromNow2
+            break
+        }
+      }
+      
+      return matchesSearch && matchesStatus
+    })
+  }, [lembretes, searchTerm, statusFilter])
 
   useEffect(() => {
     if (user?.uid) {
@@ -236,6 +271,32 @@ export default function Lembretes() {
         </div>
       </div>
 
+      {/* Filtros */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            placeholder="Pesquisar lembretes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        <Select value={statusFilter || 'all'} onValueChange={(value) => setStatusFilter(value === 'all' ? '' : value)}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os status</SelectItem>
+            <SelectItem value="vencido">Vencidos</SelectItem>
+            <SelectItem value="proximo">Próximos (7 dias)</SelectItem>
+            <SelectItem value="futuro">Futuros</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="grid gap-4">
         {isLoading ? (
           <div className="space-y-4">
@@ -253,7 +314,7 @@ export default function Lembretes() {
               </Card>
             ))}
           </div>
-        ) : lembretes.length === 0 ? (
+        ) : filteredLembretes.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
               <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -264,7 +325,7 @@ export default function Lembretes() {
             </CardContent>
           </Card>
         ) : (
-          lembretes.map((lembrete) => {
+          filteredLembretes.map((lembrete) => {
             const dateStatus = lembrete.data ? getDateStatus(lembrete.data) : null
             return (
               <Card key={lembrete.id} className={`hover:shadow-md transition-shadow ${

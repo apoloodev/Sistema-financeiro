@@ -1,7 +1,8 @@
 
-import { useState, useEffect } from 'react';
-import { Plus, AlertCircle, RefreshCw } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Plus, AlertCircle, RefreshCw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CategoriesList } from '@/components/categories/CategoriesList';
 import { CategoryForm } from '@/components/categories/CategoryForm';
@@ -11,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 export default function Categorias() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const { user, isAuthenticated } = useAuth();
   const { 
     categories, 
@@ -19,6 +21,16 @@ export default function Categorias() {
     fetchCategories, 
     clearError 
   } = useCategories();
+
+  // Filtrar categorias
+  const filteredCategories = useMemo(() => {
+    if (!searchTerm) return categories;
+    
+    return categories.filter(category => 
+      category.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      category.tags.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [categories, searchTerm]);
 
   const handleEditCategory = (category: any) => {
     setEditingCategory(category);
@@ -92,6 +104,17 @@ export default function Categorias() {
         </div>
       </div>
 
+      {/* Filtro de busca */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <Input
+          placeholder="Pesquisar categorias por nome ou tags..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
       {/* Exibir erro se houver */}
       {error && (
         <Alert variant="destructive">
@@ -112,7 +135,7 @@ export default function Categorias() {
 
       {/* Lista de categorias */}
       <CategoriesList 
-        categories={categories} 
+        categories={filteredCategories} 
         onEdit={handleEditCategory}
       />
 

@@ -134,12 +134,6 @@ export default function Dashboard() {
     console.log('📊 Dashboard: Filtros - Mês:', filterMonth, 'Ano:', filterYear)
     console.log('📊 Dashboard: Total de transações:', transacoes.length)
     
-    // Temporariamente mostrar todas as transações para debug
-    console.log('📊 Dashboard: Mostrando todas as transações para debug')
-    return transacoes
-    
-    // Código original comentado para debug
-    /*
     const filtered = transacoes.filter(transacao => {
       if (!transacao.quando) {
         console.log('📊 Dashboard: Transação sem data:', transacao)
@@ -164,7 +158,6 @@ export default function Dashboard() {
     
     console.log('📊 Dashboard: Transações filtradas:', filtered.length)
     return filtered
-    */
   }, [transacoes, filterMonth, filterYear])
 
   // Calcular estatísticas
