@@ -85,6 +85,11 @@ export const seedTransactions = async (userId: string) => {
     }
   ]
 
+  console.log('🌱 Dados de transações para inserir:')
+  defaultTransactions.forEach((t, i) => {
+    console.log(`🌱 ${i + 1}. ${t.estabelecimento} - ${t.tipo} - R$ ${t.valor} - ${t.quando}`)
+  })
+
   console.log('🌱 Inserindo transações de exemplo...')
   console.log('🌱 Usuário ID:', userId)
   console.log('🌱 Número de transações para inserir:', defaultTransactions.length)

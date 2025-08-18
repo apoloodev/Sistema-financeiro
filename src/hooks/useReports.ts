@@ -1,6 +1,8 @@
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { getTransacoes } from '@/integrations/firebase/services'
+import type { Transacao } from '@/integrations/firebase/types'
 
 export interface ReportTransaction {
   id: number
@@ -27,6 +29,8 @@ export interface ReportFilters {
 
 export function useReports() {
   const { user } = useAuth()
+  const [transactions, setTransactions] = useState<Transacao[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [filters, setFilters] = useState<ReportFilters>({
     startDate: '',
     endDate: '',
@@ -35,12 +39,41 @@ export function useReports() {
     period: 'month'
   })
 
-  // Database tables don't exist yet, return empty data
-  const transactions: ReportTransaction[] = []
-  const isLoading = false
+  // Buscar transações do Firebase
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      if (!user?.uid) {
+        setIsLoading(false)
+        return
+      }
+
+      try {
+        console.log('📊 useReports: Buscando transações para usuário:', user.uid)
+        setIsLoading(true)
+        
+        const { data, error } = await getTransacoes(user.uid)
+        
+        if (error) {
+          console.error('📊 useReports: Erro ao buscar transações:', error)
+          return
+        }
+
+        console.log('📊 useReports: Transações carregadas:', data)
+        setTransactions(data || [])
+      } catch (error) {
+        console.error('📊 useReports: Erro ao buscar transações:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchTransactions()
+  }, [user?.uid])
 
   // Calculate summary data
   const summaryData = useMemo(() => {
+    console.log('📊 useReports: Calculando resumo com', transactions.length, 'transações')
+    
     const receitas = transactions
       .filter(t => t.tipo === 'receita')
       .reduce((acc, t) => acc + (t.valor || 0), 0)
@@ -51,9 +84,11 @@ export function useReports() {
     
     const saldo = receitas - despesas
 
+    console.log('📊 useReports: Resumo calculado - Receitas:', receitas, 'Despesas:', despesas, 'Saldo:', saldo)
+
     // Group by category
     const byCategory = transactions.reduce((acc, transaction) => {
-      const categoryName = transaction.categorias?.nome || 'Sem categoria'
+      const categoryName = transaction.category_id || 'Sem categoria'
       const valor = transaction.valor || 0
       
       if (!acc[categoryName]) {

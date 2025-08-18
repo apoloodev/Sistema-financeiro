@@ -24,10 +24,10 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
           <TrendingUp className="h-4 w-4 text-green-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">
+          <div className="text-2xl font-bold text-green-600 text-center">
             {formatCurrency(stats.totalReceitas)}
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground text-center">
             Mês atual
           </p>
         </CardContent>
@@ -41,10 +41,10 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
           <TrendingDown className="h-4 w-4 text-red-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-red-600">
+          <div className="text-2xl font-bold text-red-600 text-center">
             {formatCurrency(stats.totalDespesas)}
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground text-center">
             Mês atual
           </p>
         </CardContent>
@@ -58,10 +58,10 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
           <DollarSign className="h-4 w-4 text-primary" />
         </CardHeader>
         <CardContent>
-          <div className={`text-2xl font-bold ${stats.saldo >= 0 ? 'text-primary' : 'text-red-600'}`}>
+          <div className={`text-2xl font-bold text-center ${stats.saldo >= 0 ? 'text-primary' : 'text-red-600'}`}>
             {formatCurrency(stats.saldo)}
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground text-center">
             Receitas - Despesas
           </p>
         </CardContent>
@@ -75,10 +75,10 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
           <Calendar className="h-4 w-4 text-purple-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-purple-600">
+          <div className="text-2xl font-bold text-purple-600 text-center">
             {stats.lembretesCount}
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground text-center">
             Este mês
           </p>
         </CardContent>

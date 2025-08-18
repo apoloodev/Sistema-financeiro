@@ -19,7 +19,7 @@ export function ReportSummary({ receitas, despesas, saldo, totalTransactions }: 
           <TrendingUp className="h-4 w-4 text-green-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">
+          <div className="text-2xl font-bold text-green-600 text-center">
             {formatCurrency(receitas)}
           </div>
         </CardContent>
@@ -31,7 +31,7 @@ export function ReportSummary({ receitas, despesas, saldo, totalTransactions }: 
           <TrendingDown className="h-4 w-4 text-red-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-red-600">
+          <div className="text-2xl font-bold text-red-600 text-center">
             {formatCurrency(despesas)}
           </div>
         </CardContent>
@@ -43,7 +43,7 @@ export function ReportSummary({ receitas, despesas, saldo, totalTransactions }: 
           <DollarSign className={`h-4 w-4 ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`} />
         </CardHeader>
         <CardContent>
-          <div className={`text-2xl font-bold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <div className={`text-2xl font-bold text-center ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {formatCurrency(saldo)}
           </div>
         </CardContent>
@@ -55,7 +55,7 @@ export function ReportSummary({ receitas, despesas, saldo, totalTransactions }: 
           <BarChart className="h-4 w-4 text-blue-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-blue-600">
+          <div className="text-2xl font-bold text-blue-600 text-center">
             {totalTransactions}
           </div>
         </CardContent>
