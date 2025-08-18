@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IA de Controle de Gastos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            font-weight: 500;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab:hover {
+            background: #5a6fd8;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1em;
+            margin-bottom: 20px;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .result {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+
+        .result-label {
+            font-weight: 500;
+            color: #666;
+        }
+
+        .result-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ffe6e6;
+            border-left: 4px solid #ff4444;
+            color: #cc0000;
+        }
+
+        .success {
+            background: #e6ffe6;
+            border-left: 4px solid #44ff44;
+            color: #006600;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 IA de Controle de Gastos</h1>
+            <p>Processe fotos, áudios e mensagens automaticamente</p>
+        </div>
+
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('photo')">📸 Foto</button>
+                <button class="tab" onclick="showTab('audio')">🎤 Áudio</button>
+                <button class="tab" onclick="showTab('text')">💬 Texto</button>
+            </div>
+
+            <!-- Tab Foto -->
+            <div id="photo" class="tab-content active">
+                <div class="upload-area" onclick="document.getElementById('photoFile').click()">
+                    <div class="upload-icon">📸</div>
+                    <h3>Envie uma foto de comprovante</h3>
+                    <p>Clique ou arraste uma imagem aqui</p>
+                    <input type="file" id="photoFile" class="file-input" accept="image/*" onchange="handlePhotoUpload(event)">
+                </div>
+                <button class="btn" onclick="processPhoto()" id="processPhotoBtn" disabled>Processar Foto</button>
+            </div>
+
+            <!-- Tab Áudio -->
+            <div id="audio" class="tab-content">
+                <div class="upload-area" onclick="document.getElementById('audioFile').click()">
+                    <div class="upload-icon">🎤</div>
+                    <h3>Envie um áudio de voz</h3>
+                    <p>Clique ou arraste um arquivo de áudio aqui</p>
+                    <input type="file" id="audioFile" class="file-input" accept="audio/*" onchange="handleAudioUpload(event)">
+                </div>
+                <button class="btn" onclick="processAudio()" id="processAudioBtn" disabled>Processar Áudio</button>
+            </div>
+
+            <!-- Tab Texto -->
+            <div id="text" class="tab-content">
+                <textarea 
+                    class="text-input" 
+                    placeholder="Digite sua mensagem aqui... Ex: Gastei R$ 50 no mercado hoje"
+                    id="textInput"
+                ></textarea>
+                <button class="btn" onclick="processText()">Processar Texto</button>
+            </div>
+
+            <!-- Resultado -->
+            <div id="result" class="result" style="display: none;">
+                <h3>📊 Resultado do Processamento</h3>
+                <div id="resultContent"></div>
+            </div>
+
+            <!-- Status -->
+            <div id="status"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedPhoto = null;
+        let selectedAudio = null;
+
+        function showTab(tabName) {
+            // Esconder todas as tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Mostrar tab selecionada
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            // Limpar resultado
+            hideResult();
+        }
+
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedPhoto = file;
+                document.getElementById('processPhotoBtn').disabled = false;
+                showStatus('Foto selecionada: ' + file.name, 'info');
+            }
+        }
+
+        function handleAudioUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedAudio = file;
+                document.getElementById('processAudioBtn').disabled = false;
+                showStatus('Áudio selecionado: ' + file.name, 'info');
+            }
+        }
+
+        async function processPhoto() {
+            if (!selectedPhoto) return;
+
+            showLoading('Processando foto...');
+            
+            const formData = new FormData();
+            formData.append('image', selectedPhoto);
+
+            try {
+                const response = await fetch('/api/ingest/photo', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult(result.data);
+                    showStatus('Foto processada com sucesso!', 'success');
+                } else {
+                    showStatus('Erro ao processar foto: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Erro de conexão: ' + error.message, 'error');
+            }
+        }
+
+        async function processAudio() {
+            if (!selectedAudio) return;
+
+            showLoading('Processando áudio...');
+            
+            const formData = new FormData();
+            formData.append('audio', selectedAudio);
+
+            try {
+                const response = await fetch('/api/ingest/audio', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult(result.data);
+                    showStatus('Áudio processado com sucesso!', 'success');
+                } else {
+                    showStatus('Erro ao processar áudio: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Erro de conexão: ' + error.message, 'error');
+            }
+        }
+
+        async function processText() {
+            const text = document.getElementById('textInput').value.trim();
+            if (!text) {
+                showStatus('Digite uma mensagem primeiro!', 'error');
+                return;
+            }
+
+            showLoading('Processando texto...');
+
+            try {
+                const response = await fetch('/api/ingest/text', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult(result.data);
+                    showStatus('Texto processado com sucesso!', 'success');
+                } else {
+                    showStatus('Erro ao processar texto: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Erro de conexão: ' + error.message, 'error');
+            }
+        }
+
+        function showResult(data) {
+            const resultDiv = document.getElementById('result');
+            const contentDiv = document.getElementById('resultContent');
+
+            contentDiv.innerHTML = `
+                <div class="result-item">
+                    <span class="result-label">Estabelecimento:</span>
+                    <span class="result-value">${data.estabelecimento || 'Não identificado'}</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Valor:</span>
+                    <span class="result-value">R$ ${data.valor?.toFixed(2) || '0,00'}</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Data:</span>
+                    <span class="result-value">${data.quando ? new Date(data.quando).toLocaleDateString('pt-BR') : 'Hoje'}</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Tipo:</span>
+                    <span class="result-value">${data.tipo || 'despesa'}</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Categoria:</span>
+                    <span class="result-value">${data.category_id || 'Não categorizada'}</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Detalhes:</span>
+                    <span class="result-value">${data.detalhes || 'Nenhum detalhe'}</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Categoria Detectada por:</span>
+                    <span class="result-value">${data.categoria_detectada || 'manual'}</span>
+                </div>
+            `;
+
+            resultDiv.style.display = 'block';
+        }
+
+        function showLoading(message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>${message}</p>
+                </div>
+            `;
+            hideResult();
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function hideResult() {
+            document.getElementById('result').style.display = 'none';
+        }
+
+        // Drag and drop
+        document.querySelectorAll('.upload-area').forEach(area => {
+            area.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                area.classList.add('dragover');
+            });
+
+            area.addEventListener('dragleave', () => {
+                area.classList.remove('dragover');
+            });
+
+            area.addEventListener('drop', (e) => {
+                e.preventDefault();
+                area.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    
+                    if (area.parentElement.id === 'photo') {
+                        document.getElementById('photoFile').files = files;
+                        handlePhotoUpload({ target: { files: [file] } });
+                    } else if (area.parentElement.id === 'audio') {
+                        document.getElementById('audioFile').files = files;
+                        handleAudioUpload({ target: { files: [file] } });
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
