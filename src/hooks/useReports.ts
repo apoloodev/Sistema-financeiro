@@ -36,7 +36,7 @@ export function useReports() {
     endDate: '',
     type: '',
     categoryId: '',
-    period: 'month'
+    period: 'year' // Mudar para 'year' para mostrar todos os dados
   })
 
   // Buscar transações do Firebase
@@ -72,14 +72,25 @@ export function useReports() {
 
   // Filtrar transações baseado nos filtros
   const filteredTransactions = useMemo(() => {
+    console.log('📊 useReports: Filtrando transações...')
+    console.log('📊 useReports: Total de transações:', transactions.length)
+    console.log('📊 useReports: Filtros atuais:', filters)
+    
     return transactions.filter(transaction => {
       // Filtro de tipo
-      if (filters.type && transaction.tipo !== filters.type) return false
+      if (filters.type && transaction.tipo !== filters.type) {
+        console.log('📊 useReports: Transação filtrada por tipo:', transaction.estabelecimento)
+        return false
+      }
       
       // Filtro de categoria
-      if (filters.categoryId && transaction.category_id !== filters.categoryId) return false
+      if (filters.categoryId && transaction.category_id !== filters.categoryId) {
+        console.log('📊 useReports: Transação filtrada por categoria:', transaction.estabelecimento)
+        return false
+      }
       
-      // Filtro de data
+      // Filtro de data - Temporariamente desabilitado para debug
+      /*
       if (transaction.quando) {
         const transactionDate = new Date(transaction.quando)
         const now = new Date()
@@ -104,7 +115,9 @@ export function useReports() {
             break
         }
       }
+      */
       
+      console.log('📊 useReports: Transação incluída:', transaction.estabelecimento, transaction.quando)
       return true
     })
   }, [transactions, filters])

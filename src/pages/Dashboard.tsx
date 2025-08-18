@@ -18,9 +18,9 @@ export default function Dashboard() {
   const [lembretes, setLembretes] = useState<Lembrete[]>([])
   const [loading, setLoading] = useState(true)
   
-  // Estados dos filtros - Configurar para 2024 para mostrar os dados inseridos
-  const [filterMonth, setFilterMonth] = useState('0') // Janeiro (0-11, então 0 = janeiro)
-  const [filterYear, setFilterYear] = useState('2024')
+  // Estados dos filtros - Configurar para mostrar dados mais recentes
+  const [filterMonth, setFilterMonth] = useState('7') // Agosto (0-11, então 7 = agosto)
+  const [filterYear, setFilterYear] = useState('2025')
 
   // Função para buscar dados
   const fetchData = async () => {

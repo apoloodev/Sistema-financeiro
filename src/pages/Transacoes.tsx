@@ -69,8 +69,9 @@ export default function Transacoes() {
       // Filtro de categoria
       const matchesCategory = !categoryFilter || transacao.category_id === categoryFilter
       
-      // Filtro de data
+      // Filtro de data - Temporariamente desabilitado para debug
       let matchesDate = true
+      /*
       if (dateFilter && transacao.quando) {
         const transacaoDate = new Date(transacao.quando)
         const now = new Date()
@@ -92,6 +93,7 @@ export default function Transacoes() {
             break
         }
       }
+      */
       
       // Filtro de valor mínimo
       const matchesMinValue = !minValue || (transacao.valor || 0) >= parseFloat(minValue)

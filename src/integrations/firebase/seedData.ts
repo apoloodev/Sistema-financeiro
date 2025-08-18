@@ -38,6 +38,7 @@ export const seedCategories = async (userId: string) => {
 
 export const seedTransactions = async (userId: string) => {
   const defaultTransactions: Omit<Transacao, 'id' | 'created_at'>[] = [
+    // Transações antigas (2024)
     {
       estabelecimento: 'Supermercado Extra',
       valor: 150.50,
@@ -82,6 +83,34 @@ export const seedTransactions = async (userId: string) => {
       quando: new Date('2024-01-12').toISOString(),
       detalhes: 'Medicamentos',
       userid: userId
+    },
+    // Transações recentes (2025)
+    {
+      estabelecimento: 'Freelance',
+      valor: 200.00,
+      tipo: 'receita',
+      category_id: '', // Deixar vazio por enquanto
+      quando: new Date('2025-08-14').toISOString(),
+      detalhes: 'Projeto de desenvolvimento web',
+      userid: userId
+    },
+    {
+      estabelecimento: 'Supermercado Extra',
+      valor: 150.50,
+      tipo: 'despesa',
+      category_id: '', // Deixar vazio por enquanto
+      quando: new Date('2025-08-10').toISOString(),
+      detalhes: 'Compra de alimentos para a semana',
+      userid: userId
+    },
+    {
+      estabelecimento: 'Salário Mensal',
+      valor: 3200.00,
+      tipo: 'receita',
+      category_id: '', // Deixar vazio por enquanto
+      quando: new Date('2025-08-01').toISOString(),
+      detalhes: 'Salário do mês de agosto',
+      userid: userId
     }
   ]
 
@@ -113,6 +142,7 @@ export const seedTransactions = async (userId: string) => {
 
 export const seedReminders = async (userId: string) => {
   const defaultReminders: Omit<Lembrete, 'id' | 'created_at'>[] = [
+    // Lembretes antigos (2024)
     {
       descricao: 'Pagar conta de luz - Vencimento da conta de energia elétrica',
       data: new Date('2024-01-25').toISOString(),
@@ -129,6 +159,19 @@ export const seedReminders = async (userId: string) => {
       descricao: 'Aniversário da mãe - Comprar presente para o aniversário',
       data: new Date('2024-02-05').toISOString(),
       valor: 100.00,
+      userid: userId
+    },
+    // Lembretes recentes (2025)
+    {
+      descricao: 'Pagar internet - Vencimento da conta de internet',
+      data: new Date('2025-08-19').toISOString(),
+      valor: 100.00,
+      userid: userId
+    },
+    {
+      descricao: 'Pagar conta de luz - Vencimento da conta de energia elétrica',
+      data: new Date('2025-08-25').toISOString(),
+      valor: 180.00,
       userid: userId
     }
   ]
