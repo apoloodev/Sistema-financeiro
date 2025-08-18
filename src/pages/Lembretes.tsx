@@ -141,6 +141,32 @@ export default function Lembretes() {
     }
   }
 
+  const handleDeleteAll = async () => {
+    if (!confirm('Tem certeza que deseja excluir TODOS os lembretes? Esta ação não pode ser desfeita.')) {
+      return
+    }
+
+    try {
+      console.log('🗑️ Deletando todos os lembretes...')
+      
+      // Deletar uma por uma (Firebase não tem delete em lote nativo)
+      const deletePromises = lembretes.map(lembrete => deleteLembrete(lembrete.id!))
+      await Promise.all(deletePromises)
+      
+      toast({
+        title: "Todos os lembretes excluídos",
+        description: `${lembretes.length} lembretes foram removidos com sucesso.`,
+      })
+    } catch (error: any) {
+      console.error('❌ Erro ao deletar todos os lembretes:', error)
+      toast({
+        title: "Erro ao excluir",
+        description: error.message || "Erro ao excluir os lembretes",
+        variant: "destructive",
+      })
+    }
+  }
+
 
 
   const formatCurrency = (value: number) => {

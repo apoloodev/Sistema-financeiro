@@ -149,11 +149,7 @@ export default function Transacoes() {
     })
   }, [user?.uid, transacoes, isLoading, error, filteredTransacoes])
 
-  const clearFilters = () => {
-    setSearchTerm('')
-    setTypeFilter('')
-    setCategoryFilter('')
-  }
+
 
   const handleSeedData = async () => {
     if (!user?.uid) {
