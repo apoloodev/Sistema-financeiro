@@ -28,6 +28,12 @@ Sistema inteligente para processamento automático de gastos através de fotos, 
 - 10 categorias pré-definidas (Alimentação, Transporte, Moradia, etc.)
 - Sistema de aprendizado para melhorar precisão
 
+### 📱 **Integração WhatsApp**
+- Recebe mensagens, áudios e fotos via WhatsApp Business API
+- Processamento automático e resposta em tempo real
+- Confirmação de dados processados
+- Suporte a múltiplos usuários
+
 ### 🔄 **Integração Completa**
 - **Firebase**: Armazenamento de dados e autenticação
 - **N8N**: Automação e workflows personalizados
@@ -77,6 +83,12 @@ OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 # N8N Webhook (opcional)
 N8N_WEBHOOK_URL=https://seu-n8n.com/webhook/expense-control
+
+# WhatsApp Business API (opcional)
+WHATSAPP_API_TOKEN=seu-token-do-whatsapp-business
+WHATSAPP_PHONE_NUMBER_ID=seu-phone-number-id
+WHATSAPP_WEBHOOK_URL=https://seu-dominio.com/api/whatsapp/webhook
+WHATSAPP_VERIFY_TOKEN=seu-verify-token-personalizado
 
 # Configurações de Processamento
 MAX_FILE_SIZE=10485760
@@ -411,9 +423,31 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 - **Issues**: [GitHub Issues](link-para-issues)
 - **Email**: seu-email@exemplo.com
 
+## 📱 Integração WhatsApp
+
+### Como Funciona
+O sistema recebe mensagens do WhatsApp Business API e processa automaticamente:
+
+1. **Mensagem de Texto**: "Gastei R$ 50 no mercado hoje"
+2. **Mensagem de Áudio**: Grave uma mensagem de voz
+3. **Mensagem de Imagem**: Envie foto de um comprovante
+
+### Configuração
+Veja o guia completo em [WHATSAPP_SETUP.md](docs/WHATSAPP_SETUP.md)
+
+### Exemplos de Uso
+```
+Usuário: "Paguei R$ 25 de uber ontem"
+Sistema: ✅ Despesa processada com sucesso!
+         💰 Valor: R$ 25.00
+         🏪 Estabelecimento: uber
+         📅 Data: 2025-08-17
+         🏷️ Categoria: Transporte
+```
+
 ## 🔮 Roadmap
 
-- [ ] Integração com WhatsApp Business API
+- [x] Integração com WhatsApp Business API
 - [ ] Processamento em lote de múltiplos arquivos
 - [ ] Dashboard web para visualização de dados
 - [ ] Machine Learning para melhorar categorização

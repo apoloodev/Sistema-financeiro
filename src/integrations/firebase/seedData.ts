@@ -3,7 +3,7 @@
 // Script para popular o banco com dados iniciais
 // =====================================================
 
-import { addCategoria, addTransacao, addLembrete } from './services'
+import { addCategoria, addTransacao, addLembrete, getCategorias } from './services'
 import type { Categoria, Transacao, Lembrete } from './types'
 
 export const seedCategories = async (userId: string) => {
@@ -37,13 +37,32 @@ export const seedCategories = async (userId: string) => {
 }
 
 export const seedTransactions = async (userId: string) => {
+  // Primeiro, buscar as categorias existentes para associar às transações
+  const { data: categorias } = await getCategorias(userId)
+  
+  if (!categorias || categorias.length === 0) {
+    console.log('⚠️ Nenhuma categoria encontrada. Criando categorias primeiro...')
+    await seedCategories(userId)
+    const { data: categoriasNovas } = await getCategorias(userId)
+    if (!categoriasNovas || categoriasNovas.length === 0) {
+      console.error('❌ Não foi possível criar categorias')
+      return
+    }
+  }
+
+  // Mapear categorias por nome para facilitar a associação
+  const categoriasMap = new Map()
+  categorias?.forEach(cat => {
+    categoriasMap.set(cat.nome, cat.id)
+  })
+
   const defaultTransactions: Omit<Transacao, 'id' | 'created_at'>[] = [
     // Transações antigas (2024)
     {
       estabelecimento: 'Supermercado Extra',
       valor: 150.50,
       tipo: 'despesa',
-      category_id: '', // Deixar vazio por enquanto
+      category_id: categoriasMap.get('Alimentação') || '',
       quando: new Date('2024-01-15').toISOString(),
       detalhes: 'Compra de alimentos para a semana',
       userid: userId
@@ -52,7 +71,7 @@ export const seedTransactions = async (userId: string) => {
       estabelecimento: 'Salário Mensal',
       valor: 3000.00,
       tipo: 'receita',
-      category_id: '', // Deixar vazio por enquanto
+      category_id: categoriasMap.get('Investimentos') || '',
       quando: new Date('2024-01-01').toISOString(),
       detalhes: 'Salário do mês de janeiro',
       userid: userId
@@ -61,7 +80,7 @@ export const seedTransactions = async (userId: string) => {
       estabelecimento: 'Uber',
       valor: 25.00,
       tipo: 'despesa',
-      category_id: '', // Deixar vazio por enquanto
+      category_id: categoriasMap.get('Transporte') || '',
       quando: new Date('2024-01-10').toISOString(),
       detalhes: 'Corrida para o trabalho',
       userid: userId
@@ -70,7 +89,7 @@ export const seedTransactions = async (userId: string) => {
       estabelecimento: 'Netflix',
       valor: 39.90,
       tipo: 'despesa',
-      category_id: '', // Deixar vazio por enquanto
+      category_id: categoriasMap.get('Lazer') || '',
       quando: new Date('2024-01-05').toISOString(),
       detalhes: 'Assinatura mensal',
       userid: userId
@@ -79,7 +98,7 @@ export const seedTransactions = async (userId: string) => {
       estabelecimento: 'Farmácia São João',
       valor: 45.00,
       tipo: 'despesa',
-      category_id: '', // Deixar vazio por enquanto
+      category_id: categoriasMap.get('Saúde') || '',
       quando: new Date('2024-01-12').toISOString(),
       detalhes: 'Medicamentos',
       userid: userId
@@ -89,7 +108,7 @@ export const seedTransactions = async (userId: string) => {
       estabelecimento: 'Freelance',
       valor: 200.00,
       tipo: 'receita',
-      category_id: '', // Deixar vazio por enquanto
+      category_id: categoriasMap.get('Investimentos') || '',
       quando: new Date('2025-08-14').toISOString(),
       detalhes: 'Projeto de desenvolvimento web',
       userid: userId
@@ -98,7 +117,7 @@ export const seedTransactions = async (userId: string) => {
       estabelecimento: 'Supermercado Extra',
       valor: 150.50,
       tipo: 'despesa',
-      category_id: '', // Deixar vazio por enquanto
+      category_id: categoriasMap.get('Alimentação') || '',
       quando: new Date('2025-08-10').toISOString(),
       detalhes: 'Compra de alimentos para a semana',
       userid: userId
@@ -107,7 +126,7 @@ export const seedTransactions = async (userId: string) => {
       estabelecimento: 'Salário Mensal',
       valor: 3200.00,
       tipo: 'receita',
-      category_id: '', // Deixar vazio por enquanto
+      category_id: categoriasMap.get('Investimentos') || '',
       quando: new Date('2025-08-01').toISOString(),
       detalhes: 'Salário do mês de agosto',
       userid: userId

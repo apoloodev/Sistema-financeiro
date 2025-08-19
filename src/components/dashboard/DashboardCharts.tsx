@@ -2,7 +2,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/utils/currency'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import type { Transacao } from '@/integrations/firebase/types'
+import { useState, useEffect } from 'react'
+import { getCategorias } from '@/integrations/firebase/services'
+import { useAuth } from '@/hooks/useAuth'
+import type { Transacao, Categoria } from '@/integrations/firebase/types'
 
 interface DashboardChartsProps {
   transacoes: Transacao[]
@@ -11,16 +14,44 @@ interface DashboardChartsProps {
 const COLORS = ['#4361ee', '#7209b7', '#f72585', '#4cc9f0', '#4895ef', '#4361ee']
 
 export function DashboardCharts({ transacoes }: DashboardChartsProps) {
+  const { user } = useAuth()
+  const [categorias, setCategorias] = useState<Categoria[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Buscar categorias do usuário
+  useEffect(() => {
+    const fetchCategorias = async () => {
+      if (!user?.uid) return
+      
+      try {
+        const { data, error } = await getCategorias(user.uid)
+        if (!error && data) {
+          setCategorias(data)
+        }
+      } catch (error) {
+        console.error('Erro ao buscar categorias:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCategorias()
+  }, [user?.uid])
+
   const getChartData = () => {
-    const categorias: { [key: string]: number } = {}
+    const categoriasMap: { [key: string]: number } = {}
     
     transacoes.forEach(t => {
-      if (t.categorias?.nome && t.valor && t.tipo === 'despesa') {
-        categorias[t.categorias.nome] = (categorias[t.categorias.nome] || 0) + Math.abs(t.valor)
+      if (t.valor && t.tipo === 'despesa') {
+        // Buscar o nome da categoria pelo category_id
+        const categoria = categorias.find(cat => cat.id === t.category_id)
+        const categoriaNome = categoria?.nome || 'Sem Categoria'
+        
+        categoriasMap[categoriaNome] = (categoriasMap[categoriaNome] || 0) + Math.abs(t.valor)
       }
     })
 
-    return Object.entries(categorias).map(([categoria, valor]) => ({
+    return Object.entries(categoriasMap).map(([categoria, valor]) => ({
       categoria,
       valor
     }))
@@ -59,15 +90,34 @@ export function DashboardCharts({ transacoes }: DashboardChartsProps) {
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={getChartData()}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="categoria" />
-                <YAxis />
-                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                <Bar dataKey="valor" fill="#4361ee" />
-              </BarChart>
-            </ResponsiveContainer>
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="mt-2 text-gray-600">Carregando categorias...</p>
+                </div>
+              </div>
+            ) : getChartData().length === 0 ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center text-gray-500">
+                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  <p className="mt-2 text-sm">Nenhum gasto encontrado</p>
+                  <p className="text-xs">Adicione transações de despesa para ver o gráfico</p>
+                </div>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={getChartData()}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="categoria" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                  <Bar dataKey="valor" fill="#4361ee" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </CardContent>
       </Card>

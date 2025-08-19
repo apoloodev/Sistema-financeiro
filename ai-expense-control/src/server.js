@@ -10,6 +10,7 @@ const { processText } = require('./services/textProcessor');
 const { categorizeExpense } = require('./services/categorizer');
 const { sendToN8N } = require('./services/n8nDispatcher');
 const { saveToFirebase } = require('./services/firebaseService');
+const { WhatsAppService } = require('./services/whatsappService');
 const { logger } = require('./utils/logger');
 
 const app = express();
@@ -199,9 +200,92 @@ app.get('/api/health', (req, res) => {
       stt: 'active',
       categorizer: 'active',
       firebase: 'active',
-      n8n: 'active'
+      n8n: 'active',
+      whatsapp: process.env.WHATSAPP_API_TOKEN ? 'configured' : 'not configured'
     }
   });
+});
+
+// =====================================================
+// ENDPOINTS DO WHATSAPP
+// =====================================================
+
+const whatsappService = new WhatsAppService();
+
+// Webhook para verificação do WhatsApp
+app.get('/api/whatsapp/webhook', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  try {
+    const result = whatsappService.verifyWebhook(mode, token, challenge);
+    res.status(200).send(result);
+  } catch (error) {
+    logger.error('❌ Erro na verificação do webhook:', error);
+    res.status(403).send('Forbidden');
+  }
+});
+
+// Webhook para receber mensagens do WhatsApp
+app.post('/api/whatsapp/webhook', async (req, res) => {
+  try {
+    const body = req.body;
+    
+    // Verificar se é uma mensagem válida
+    if (body.object === 'whatsapp_business_account') {
+      const entry = body.entry?.[0];
+      const changes = entry?.changes?.[0];
+      const value = changes?.value;
+      
+      if (value?.messages && value.messages.length > 0) {
+        const message = value.messages[0];
+        
+        // Determinar o tipo de mensagem
+        let messageData = {
+          from: message.from,
+          timestamp: message.timestamp,
+          type: 'text'
+        };
+
+        if (message.text) {
+          messageData.type = 'text';
+          messageData.text = message.text;
+        } else if (message.audio) {
+          messageData.type = 'audio';
+          messageData.audio = message.audio;
+        } else if (message.image) {
+          messageData.type = 'image';
+          messageData.image = message.image;
+        }
+
+        // Processar a mensagem
+        await whatsappService.processWhatsAppMessage(messageData);
+      }
+    }
+
+    res.status(200).send('OK');
+  } catch (error) {
+    logger.error('❌ Erro no webhook do WhatsApp:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// Endpoint para enviar mensagem manual (para testes)
+app.post('/api/whatsapp/send', async (req, res) => {
+  try {
+    const { to, message } = req.body;
+    
+    if (!to || !message) {
+      return res.status(400).json({ error: 'to e message são obrigatórios' });
+    }
+
+    await whatsappService.sendReply(to, message);
+    res.json({ success: true, message: 'Mensagem enviada com sucesso' });
+  } catch (error) {
+    logger.error('❌ Erro ao enviar mensagem:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Middleware de tratamento de erros
