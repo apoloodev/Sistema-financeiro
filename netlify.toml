@@ -1,15 +1,10 @@
 [build]
-  command = "npm install"
-  publish = "ai-expense-control/public"
+  command = "npm run build"
+  publish = "dist"
   functions = "ai-expense-control/functions"
 
 [build.environment]
   NODE_VERSION = "18"
-
-[context.master]
-  command = "npm install"
-  publish = "ai-expense-control/public"
-  functions = "ai-expense-control/functions"
 
 [[redirects]]
   from = "/api/*"
