@@ -8,10 +8,5 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "functions": {
-    "ai-expense-control/functions/aiExpenseControl.js": {
-      "runtime": "nodejs18.x"
-    }
-  }
+  ]
 }
