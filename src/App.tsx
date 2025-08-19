@@ -13,6 +13,7 @@ import Perfil from '@/pages/Perfil'
 import Plano from '@/pages/Plano'
 import NotFound from '@/pages/NotFound'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
+import { SubscriptionRequired } from '@/components/auth/SubscriptionRequired'
 
 // Teste de importação do Firebase
 import '@/integrations/firebase/config'
@@ -27,13 +28,53 @@ function App() {
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={<AppLayout />}>
-              <Route index element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="transacoes" element={<ProtectedRoute><Transacoes /></ProtectedRoute>} />
-              <Route path="categorias" element={<ProtectedRoute><Categorias /></ProtectedRoute>} />
-              <Route path="relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
-              <Route path="lembretes" element={<ProtectedRoute><Lembretes /></ProtectedRoute>} />
-              <Route path="perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
+              <Route index element={
+                <ProtectedRoute>
+                  <SubscriptionRequired>
+                    <Dashboard />
+                  </SubscriptionRequired>
+                </ProtectedRoute>
+              } />
+              <Route path="dashboard" element={
+                <ProtectedRoute>
+                  <SubscriptionRequired>
+                    <Dashboard />
+                  </SubscriptionRequired>
+                </ProtectedRoute>
+              } />
+              <Route path="transacoes" element={
+                <ProtectedRoute>
+                  <SubscriptionRequired>
+                    <Transacoes />
+                  </SubscriptionRequired>
+                </ProtectedRoute>
+              } />
+              <Route path="categorias" element={
+                <ProtectedRoute>
+                  <SubscriptionRequired>
+                    <Categorias />
+                  </SubscriptionRequired>
+                </ProtectedRoute>
+              } />
+              <Route path="relatorios" element={
+                <ProtectedRoute>
+                  <SubscriptionRequired>
+                    <Relatorios />
+                  </SubscriptionRequired>
+                </ProtectedRoute>
+              } />
+              <Route path="lembretes" element={
+                <ProtectedRoute>
+                  <SubscriptionRequired>
+                    <Lembretes />
+                  </SubscriptionRequired>
+                </ProtectedRoute>
+              } />
+              <Route path="perfil" element={
+                <ProtectedRoute>
+                  <Perfil />
+                </ProtectedRoute>
+              } />
             </Route>
             <Route path="/plano" element={<Plano />} />
             <Route path="*" element={<NotFound />} />

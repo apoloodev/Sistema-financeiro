@@ -2,26 +2,69 @@
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useTheme } from '@/hooks/useTheme';
-import { Check } from 'lucide-react';
+import { Check, CreditCard, Shield, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Plano() {
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   
-  const handleSubscribe = () => {
-    console.log('Iniciando processo de pagamento - Alfredoo');
-    window.open('https://sandbox.asaas.com/c/g5su9rr5jw5b2f4h', '_blank');
+  const handleSubscribe = async () => {
+    try {
+      setIsLoading(true);
+      console.log('Iniciando processo de pagamento - Alfredoo');
+      
+      // Verificar se o usuário está logado
+      if (!user) {
+        alert('Você precisa estar logado para assinar um plano');
+        navigate('/auth');
+        return;
+      }
+      
+      // Abrir link de pagamento
+      window.open('https://sandbox.asaas.com/c/g5su9rr5jw5b2f4h', '_blank');
+      
+      // Simular verificação de pagamento (em produção, isso seria feito via webhook)
+      setTimeout(() => {
+        alert('Após o pagamento, você receberá acesso completo ao sistema!');
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Erro ao processar pagamento:', error);
+      alert('Erro ao processar pagamento. Tente novamente.');
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   const handleBackToLogin = () => {
     navigate('/auth');
   };
+
+  const handleGoToDashboard = () => {
+    navigate('/dashboard');
+  };
   
   const benefits = [
-    'Registre gastos e receitas automaticamente',
-    'Receba lembretes de contas e metas', 
-    'Tenha um assistente sempre pronto para ajudar'
+    {
+      icon: <Zap className="h-5 w-5" />,
+      title: 'Registre gastos automaticamente',
+      description: 'Via WhatsApp, foto ou áudio'
+    },
+    {
+      icon: <Shield className="h-5 w-5" />,
+      title: 'Controle total das finanças',
+      description: 'Dashboard completo e relatórios'
+    },
+    {
+      icon: <CreditCard className="h-5 w-5" />,
+      title: 'Lembretes inteligentes',
+      description: 'Nunca mais esqueça de pagar contas'
+    }
   ];
 
   // Array de fotos de usuários para simular perfis
@@ -110,47 +153,83 @@ export default function Plano() {
           <div className="w-full mx-auto">
             <div className="text-start py-4 sm:py-6 lg:py-8">
               <h1 className="text-xl sm:text-2xl font-bold text-slate-800 mb-2 dark:text-slate-300">
-                ALFREDO - Assistente Financeiro  R$97,00 Mensal
+                ALFREDO - Assistente Financeiro
               </h1>
+              
+              {/* Preço */}
+              <div className="mb-4">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-primary">R$ 97,00</span>
+                  <span className="text-muted-foreground">/mês</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Menos de R$ 0,54 por dia
+                </p>
+              </div>
+              
               <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8">
                 Seu assistente financeiro inteligente para organizar suas finanças!
               </p>
 
               {/* Benefits List */}
-              <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+              <div className="space-y-4 mb-6 sm:mb-8">
                 {benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <div className="bg-primary rounded-full p-1 mt-0.5 flex-shrink-0">
-                      <Check className="h-3 w-3 text-white" />
+                  <div key={index} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                    <div className="bg-primary rounded-full p-1.5 mt-0.5 flex-shrink-0">
+                      {benefit.icon}
                     </div>
-                    <p className="text-sm sm:text-base text-foreground">{benefit}</p>
+                    <div>
+                      <p className="font-medium text-foreground">{benefit.title}</p>
+                      <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                    </div>
                   </div>
                 ))}
               </div>
 
-              {/* Impact Message */}
-              <div className="bg-primary/10 rounded-lg p-3 sm:p-4 mb-6 sm:mb-8">
-                <p className="text-base sm:text-lg font-semibold text-primary text-center">
-                  Invista no controle da sua vida financeira por menos de R$0,54 por dia!
+              {/* Garantia */}
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 mb-6 sm:mb-8">
+                <div className="flex items-center gap-2 mb-2">
+                  <Shield className="h-5 w-5 text-green-600" />
+                  <span className="font-semibold text-green-800 dark:text-green-200">7 dias de garantia</span>
+                </div>
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  Se não gostar, devolvemos seu dinheiro em até 7 dias
                 </p>
               </div>
 
               {/* Action Buttons */}
               <div className="space-y-3 sm:space-y-4">
-                <Button 
-                  onClick={handleSubscribe} 
-                  className="w-full h-11 bg-primary hover:bg-primary/90 text-base sm:text-lg font-semibold"
-                >
-                  Assinar agora
-                </Button>
+                {user ? (
+                  <Button 
+                    onClick={handleSubscribe} 
+                    disabled={isLoading}
+                    className="w-full h-12 bg-primary hover:bg-primary/90 text-base sm:text-lg font-semibold"
+                  >
+                    {isLoading ? 'Processando...' : 'Assinar agora - R$ 97,00/mês'}
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={handleBackToLogin} 
+                    className="w-full h-12 bg-primary hover:bg-primary/90 text-base sm:text-lg font-semibold"
+                  >
+                    Fazer login para assinar
+                  </Button>
+                )}
                 
                 <Button 
                   variant="outline" 
-                  onClick={handleBackToLogin} 
-                  className="w-full h-11 border-primary text-primary hover:bg-primary hover:text-primary-foreground text-base sm:text-lg"
+                  onClick={user ? handleGoToDashboard : handleBackToLogin} 
+                  className="w-full h-12 border-primary text-primary hover:bg-primary hover:text-primary-foreground text-base sm:text-lg"
                 >
-                  Voltar ao login
+                  {user ? 'Ir para o Dashboard' : 'Voltar ao login'}
                 </Button>
+              </div>
+
+              {/* Informações adicionais */}
+              <div className="mt-6 text-center">
+                <p className="text-xs text-muted-foreground">
+                  Pagamento seguro via Asaas • Cancelamento a qualquer momento
+                </p>
               </div>
             </div>
           </div>
