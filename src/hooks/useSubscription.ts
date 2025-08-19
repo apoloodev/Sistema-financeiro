@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
-import { db } from '@/integrations/firebase/client';
+import { db } from '@/integrations/firebase/config';
 
 export interface Subscription {
   id: string;

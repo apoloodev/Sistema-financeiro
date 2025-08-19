@@ -1,5 +1,5 @@
 import { doc, setDoc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { db } from './client';
+import { db } from './config';
 import type { Subscription } from '@/hooks/useSubscription';
 
 // Criar ou atualizar assinatura
