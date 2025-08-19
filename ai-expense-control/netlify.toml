@@ -1,7 +1,7 @@
 [build]
   command = "npm install"
-  publish = "public"
-  functions = "functions"
+  publish = "ai-expense-control/public"
+  functions = "ai-expense-control/functions"
 
 [build.environment]
   NODE_VERSION = "18"

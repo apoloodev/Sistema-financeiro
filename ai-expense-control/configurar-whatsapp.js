@@ -8,7 +8,7 @@ const config = {
   WHATSAPP_PHONE_NUMBER_ID: '766671313191899',
   WHATSAPP_BUSINESS_ACCOUNT_ID: '796070689660148',
   WHATSAPP_API_TOKEN: 'EAASCD7lGkusBPGZBf4kIZCNoHCm4yVuAhgdtvDZBtPWv5P8TL7tsUzs8cccurNKduCZAsZAFRrSLf1IEwkbZAru5DKFqXxyIuH37ITnf1geYmE0HXowU75gu2I4hM02sMRczUytZBIYkqk5ZCZAz6ijflNGYelZAdilg8iq7SGS4Knas9WLI8FuruM2nPsZAyHnyaZAZCSHo0sp8jKDrcbpKLcqO9Pw0ZBBXBcbIoFpDMv9B1EMCLFLgZDZD', // Você precisa gerar este token
-  WHATSAPP_WEBHOOK_URL: 'https://seu-dominio.com/api/whatsapp/webhook', // Substitua pelo seu domínio
+  WHATSAPP_WEBHOOK_URL: 'https://sistemafinanceiro.loca.lt/api/whatsapp/webhook', // Substitua pelo seu domínio
   WHATSAPP_VERIFY_TOKEN: 'SantosDrumont' // Token que você está usando
 };
 
