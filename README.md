@@ -199,3 +199,5 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 ---
 
 ⭐ Se este projeto te ajudou, considere dar uma estrela no repositório!
+
+🚀 **Deploy Status**: Configurado para Vercel com configurações padrão
