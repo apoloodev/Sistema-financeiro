@@ -138,16 +138,7 @@ export function LoginForm({ onForgotPassword, onRegister }: LoginFormProps) {
             Esqueceu sua senha?
           </Button>
           
-          <div className="text-sm" style={{ color: '#888' }}>
-            Não tem uma conta?{' '}
-            <button
-              type="button"
-              onClick={onRegister}
-              className="text-primary hover:underline font-medium"
-            >
-              Criar conta
-            </button>
-          </div>
+
         </div>
       </div>
     </div>

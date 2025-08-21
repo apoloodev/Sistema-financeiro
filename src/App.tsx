@@ -11,6 +11,8 @@ import Relatorios from '@/pages/Relatorios'
 import Lembretes from '@/pages/Lembretes'
 import Perfil from '@/pages/Perfil'
 import Plano from '@/pages/Plano'
+import PaymentSuccess from '@/pages/PaymentSuccess'
+import AIDemo from '@/pages/AIDemo'
 import NotFound from '@/pages/NotFound'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { SubscriptionRequired } from '@/components/auth/SubscriptionRequired'
@@ -77,6 +79,8 @@ function App() {
               } />
             </Route>
             <Route path="/plano" element={<Plano />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/ai-demo" element={<AIDemo />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>

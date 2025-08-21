@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { RegisterForm } from '@/components/auth/RegisterForm';
 import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm';
-import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 type AuthMode = 'login' | 'register' | 'forgot';
@@ -49,29 +48,11 @@ export default function Auth() {
                 onForgotPassword={() => setMode('forgot')} 
                 onRegister={() => setMode('register')}
               />
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-muted-foreground">Ou continue com</span>
-                </div>
-              </div>
-              <GoogleLoginButton />
             </>
           )}
           {mode === 'register' && (
             <>
               <RegisterForm onBackToLogin={() => setMode('login')} />
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-muted-foreground">Ou continue com</span>
-                </div>
-              </div>
-              <GoogleLoginButton />
             </>
           )}
           {mode === 'forgot' && <ForgotPasswordForm onBack={() => setMode('login')} />}

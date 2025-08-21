@@ -18,7 +18,7 @@ export const createOrUpdateSubscription = async (
       startDate: new Date().toISOString(),
       endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 dias
       paymentMethod: 'asaas',
-      amount: 97.00,
+             amount: 0.01,
       currency: 'BRL',
       autoRenew: true,
       createdAt: new Date().toISOString(),

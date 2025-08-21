@@ -84,25 +84,25 @@ export function SubscriptionRequired({ children }: SubscriptionRequiredProps) {
             </div>
           </div>
 
-          {/* Preço */}
-          <div className="bg-muted/50 rounded-lg p-4 text-center">
-            <div className="flex items-baseline justify-center gap-2 mb-1">
-              <span className="text-2xl font-bold text-primary">R$ 97,00</span>
-              <span className="text-muted-foreground">/mês</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Menos de R$ 0,54 por dia
-            </p>
-          </div>
+                     {/* Preço */}
+           <div className="bg-muted/50 rounded-lg p-4 text-center">
+             <div className="flex items-baseline justify-center gap-2 mb-1">
+               <span className="text-2xl font-bold text-primary">R$ 0,01</span>
+               <span className="text-muted-foreground">/mês</span>
+             </div>
+             <p className="text-sm text-muted-foreground">
+               Valor promocional para testes
+             </p>
+           </div>
 
           {/* Botões */}
           <div className="space-y-3">
-            <Button 
-              onClick={() => navigate('/plano')} 
-              className="w-full"
-            >
-              Assinar agora - R$ 97,00/mês
-            </Button>
+                         <Button 
+               onClick={() => navigate('/plano')} 
+               className="w-full"
+             >
+               Assinar agora - R$ 0,01/mês
+             </Button>
             
             <Button 
               variant="outline" 

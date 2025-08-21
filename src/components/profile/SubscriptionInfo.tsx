@@ -149,9 +149,9 @@ export function SubscriptionInfo() {
                 Você ainda não possui uma assinatura ativa
               </p>
             </div>
-            <Button onClick={() => navigate('/plano')} className="w-full md:w-auto">
-              Assinar agora - R$ 97,00/mês
-            </Button>
+                         <Button onClick={() => navigate('/plano')} className="w-full md:w-auto">
+               Assinar agora - R$ 0,01/mês
+             </Button>
           </div>
         </CardContent>
       </Card>
