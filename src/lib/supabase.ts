@@ -3,6 +3,19 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+// Debug: verificar se as variáveis estão sendo carregadas
+console.log('🔧 Supabase Config:', {
+  url: supabaseUrl ? '✅ Configurada' : '❌ Não configurada',
+  key: supabaseAnonKey ? '✅ Configurada' : '❌ Não configurada',
+  keyPreview: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'N/A'
+})
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ Variáveis de ambiente do Supabase não configuradas!')
+  console.error('VITE_SUPABASE_URL:', supabaseUrl)
+  console.error('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Presente' : 'Ausente')
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export interface User {
