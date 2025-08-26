@@ -1,21 +1,17 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { getTransacoes, getLembretes } from '@/integrations/firebase/services'
-import { seedAllData } from '@/integrations/firebase/seedData'
+import { TransacoesService } from '@/services/transacoes'
 import { toast } from '@/hooks/use-toast'
 import { DashboardStats } from '@/components/dashboard/DashboardStats'
 import { DashboardFilters } from '@/components/dashboard/DashboardFilters'
-import { DashboardCharts } from '@/components/dashboard/DashboardCharts'
-import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
-import type { Transacao, Lembrete } from '@/integrations/firebase/types'
+import type { Transacao } from '@/lib/supabase'
 
 export default function Dashboard() {
   console.log('📊 Dashboard: Componente sendo renderizado')
   
   const { user } = useAuth()
   const [transacoes, setTransacoes] = useState<Transacao[]>([])
-  const [lembretes, setLembretes] = useState<Lembrete[]>([])
   const [loading, setLoading] = useState(true)
   
   // Estados dos filtros - Configurar para mostrar dados mais recentes
@@ -28,32 +24,16 @@ export default function Dashboard() {
       console.log('📊 Dashboard: Iniciando fetchData...')
       setLoading(true)
       
-      if (!user?.uid) {
+      if (!user?.id) {
         throw new Error('Usuário não autenticado')
       }
 
-      console.log('📊 Dashboard: Buscando transações para usuário:', user.uid)
-      // Buscar transações
-      const { data: transacoesData, error: transacoesError } = await getTransacoes(user.uid)
-
-      if (transacoesError) {
-        console.error('📊 Dashboard: Erro ao buscar transações:', transacoesError)
-        throw new Error(transacoesError)
-      }
-
-      console.log('📊 Dashboard: Buscando lembretes para usuário:', user.uid)
-      // Buscar lembretes
-      const { data: lembretesData, error: lembretesError } = await getLembretes(user.uid)
-
-      if (lembretesError) {
-        console.error('📊 Dashboard: Erro ao buscar lembretes:', lembretesError)
-        throw new Error(lembretesError)
-      }
+      console.log('📊 Dashboard: Buscando transações para usuário:', user.id)
+      // Buscar transações usando Supabase
+      const transacoesData = await TransacoesService.getTransacoes(user.id)
 
       console.log('📊 Dashboard: Transações carregadas:', transacoesData)
-      console.log('📊 Dashboard: Lembretes carregados:', lembretesData)
       setTransacoes(transacoesData || [])
-      setLembretes(lembretesData || [])
       
     } catch (error: any) {
       console.error('📊 Dashboard: Erro detalhado:', error)
@@ -68,86 +48,33 @@ export default function Dashboard() {
     }
   }
 
-  // Função para inserir dados de exemplo
-  const handleSeedData = async () => {
-    try {
-      console.log('📊 Dashboard: Inserindo dados de exemplo...')
-      setLoading(true)
-      
-      if (!user?.uid) {
-        toast({
-          title: "Erro",
-          description: "Usuário não autenticado",
-          variant: "destructive",
-        })
-        return
-      }
-
-      await seedAllData(user.uid)
-      
-      toast({
-        title: "Sucesso",
-        description: "Dados de exemplo inseridos com sucesso!",
-      })
-      
-      // Recarregar dados
-      fetchData()
-      
-    } catch (error: any) {
-      console.error('📊 Dashboard: Erro ao inserir dados:', error)
-      toast({
-        title: "Erro",
-        description: error.message || "Erro ao inserir dados de exemplo",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Buscar dados quando o usuário mudar
-  useEffect(() => {
-    console.log('📊 Dashboard: useEffect triggered, user:', user)
-    if (user) {
-      console.log('📊 Dashboard: Usuário autenticado, buscando dados...')
-      fetchData()
-    } else {
-      console.log('📊 Dashboard: Usuário não autenticado')
-    }
-  }, [user]) // fetchData não precisa estar nas dependências
-
-  // Debug: Log do estado atual
+  // Carregar dados quando o componente montar
   useEffect(() => {
     console.log('📊 Dashboard: Estado atual:', {
-      user: user?.uid,
+      user: user?.id,
       loading,
       transacoesCount: transacoes.length,
-      lembretesCount: lembretes.length,
       filterMonth,
       filterYear
     })
-  }, [user, loading, transacoes, lembretes, filterMonth, filterYear])
+    
+    if (user?.id) {
+      fetchData()
+    }
+  }, [user, filterMonth, filterYear])
 
   // Filtrar transações por mês e ano
   const filteredTransacoes = useMemo(() => {
-    console.log('📊 Dashboard: Filtrando transações...')
-    console.log('📊 Dashboard: Filtros - Mês:', filterMonth, 'Ano:', filterYear)
-    console.log('📊 Dashboard: Total de transações:', transacoes.length)
+    if (!transacoes.length) return []
     
-    const filtered = transacoes.filter(transacao => {
-      if (!transacao.quando) {
-        console.log('📊 Dashboard: Transação sem data:', transacao)
-        return false
-      }
-      
+    return transacoes.filter(transacao => {
       const transacaoDate = new Date(transacao.quando)
-      const transacaoMonth = transacaoDate.getMonth()
-      const transacaoYear = transacaoDate.getFullYear()
+      const transacaoMonth = transacaoDate.getMonth().toString()
+      const transacaoYear = transacaoDate.getFullYear().toString()
       
-      const matches = transacaoMonth === parseInt(filterMonth) && 
-                     transacaoYear === parseInt(filterYear)
+      const matches = transacaoMonth === filterMonth && transacaoYear === filterYear
       
-      console.log('📊 Dashboard: Transação:', transacao.estabelecimento, 
+      console.log('📊 Dashboard: Filtrando transação:', 
                   'Data:', transacao.quando, 
                   'Mês:', transacaoMonth, 
                   'Ano:', transacaoYear, 
@@ -155,9 +82,6 @@ export default function Dashboard() {
       
       return matches
     })
-    
-    console.log('📊 Dashboard: Transações filtradas:', filtered.length)
-    return filtered
   }, [transacoes, filterMonth, filterYear])
 
   // Calcular estatísticas
@@ -177,9 +101,9 @@ export default function Dashboard() {
       totalDespesas,
       saldo,
       transacoesCount: filteredTransacoes.length,
-      lembretesCount: lembretes.length
+      lembretesCount: 0 // Lembretes removidos, então sempre 0
     }
-  }, [filteredTransacoes, lembretes])
+  }, [filteredTransacoes])
 
   if (loading) {
     return (
@@ -194,38 +118,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Mensagem informativa sobre Firebase */}
-      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-green-800 dark:text-green-200">
-                Firebase Conectado
-              </h3>
-              <div className="mt-2 text-sm text-green-700 dark:text-green-300">
-                <p>
-                  Aplicação conectada ao Firebase. {transacoes.length === 0 && 'Clique no botão abaixo para inserir dados de exemplo.'}
-                </p>
-              </div>
-            </div>
-          </div>
-          {transacoes.length === 0 && (
-            <button
-              onClick={handleSeedData}
-              disabled={loading}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Inserindo...' : 'Inserir Dados de Exemplo'}
-            </button>
-          )}
-        </div>
-      </div>
-
       <DashboardFilters 
         filterMonth={filterMonth}
         filterYear={filterYear}
@@ -236,13 +128,10 @@ export default function Dashboard() {
       
       <DashboardStats stats={stats} />
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <DashboardCharts transacoes={filteredTransacoes} />
-        </div>
-        <div>
-          <DashboardSidebar lembretes={lembretes} />
-        </div>
+      <div className="text-center text-gray-500">
+        <p>Dashboard funcionando com Supabase!</p>
+        <p>Transações encontradas: {transacoes.length}</p>
+        <p>Transações filtradas: {filteredTransacoes.length}</p>
       </div>
     </div>
   )

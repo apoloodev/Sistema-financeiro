@@ -1,8 +1,8 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { getTransacoes } from '@/integrations/firebase/services'
-import type { Transacao } from '@/integrations/firebase/types'
+import { TransacoesService } from '@/services/transacoes'
+import type { Transacao } from '@/lib/supabase'
 
 export interface ReportTransaction {
   id: number
@@ -39,25 +39,20 @@ export function useReports() {
     period: 'year' // Mudar para 'year' para mostrar todos os dados
   })
 
-  // Buscar transações do Firebase
+  // Buscar transações do Supabase
   useEffect(() => {
     const fetchTransactions = async () => {
-      if (!user?.uid) {
+      if (!user?.id) {
         setIsLoading(false)
         return
       }
 
       try {
-        console.log('📊 useReports: Buscando transações para usuário:', user.uid)
+        console.log('📊 useReports: Buscando transações para usuário:', user.id)
         setIsLoading(true)
         
-        const { data, error } = await getTransacoes(user.uid)
+        const data = await TransacoesService.getTransacoes(user.id)
         
-        if (error) {
-          console.error('📊 useReports: Erro ao buscar transações:', error)
-          return
-        }
-
         console.log('📊 useReports: Transações carregadas:', data)
         setTransactions(data || [])
       } catch (error) {
@@ -68,7 +63,7 @@ export function useReports() {
     }
 
     fetchTransactions()
-  }, [user?.uid])
+  }, [user?.id])
 
   // Filtrar transações baseado nos filtros
   const filteredTransactions = useMemo(() => {
@@ -140,7 +135,7 @@ export function useReports() {
 
     // Group by category
     const byCategory = filteredTransactions.reduce((acc, transaction) => {
-      const categoryName = transaction.category_id || 'Sem categoria'
+      const categoryName = transaction.categorias?.nome || transaction.category_id || 'Sem categoria'
       const valor = transaction.valor || 0
       
       if (!acc[categoryName]) {

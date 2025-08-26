@@ -3,7 +3,7 @@
 // Hierarchical categories system is now active
 
 import React from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { ThemeProvider } from '@/hooks/useTheme'
 import { AuthProvider } from '@/hooks/useAuth'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -11,6 +11,9 @@ import { AppLayout } from '@/components/layout/AppLayout'
 import Auth from '@/pages/Auth'
 import Dashboard from '@/pages/Dashboard'
 import Transacoes from '@/pages/Transacoes'
+import Categorias from '@/pages/Categorias'
+import Relatorios from '@/pages/Relatorios'
+import Lembretes from '@/pages/Lembretes'
 import Perfil from '@/pages/Perfil'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 
@@ -31,9 +34,14 @@ function App() {
                 }
               >
                 <Route index element={<Dashboard />} />
+                <Route path="dashboard" element={<Dashboard />} />
                 <Route path="transacoes" element={<Transacoes />} />
+                <Route path="categorias" element={<Categorias />} />
+                <Route path="relatorios" element={<Relatorios />} />
+                <Route path="lembretes" element={<Lembretes />} />
                 <Route path="perfil" element={<Perfil />} />
               </Route>
+              <Route path="/dashboard" element={<Navigate to="/" replace />} />
             </Routes>
           </Router>
         </TooltipProvider>

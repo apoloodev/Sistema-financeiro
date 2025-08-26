@@ -4,80 +4,63 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { PhoneInput } from '@/components/ui/phone-input'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ChangePasswordForm } from '@/components/profile/ChangePasswordForm'
-import { SubscriptionInfo } from '@/components/profile/SubscriptionInfo'
-import { getProfile, updateProfile } from '@/integrations/firebase/services'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from '@/hooks/use-toast'
 import { Camera, User, Trash2, Settings, CreditCard, Shield } from 'lucide-react'
-import { validateWhatsAppNumber } from '@/utils/whatsapp'
 import { useNavigate } from 'react-router-dom'
-
-import type { Profile } from '@/integrations/firebase/types'
+import { supabase } from '@/lib/supabase'
+import type { Profile } from '@/lib/supabase'
+import { Badge } from '@/components/ui/badge'
 
 export default function Perfil() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
-  const [profile, setProfile] = useState<Profile>({
-    nome: '',
-    phone: '',
-    email: ''
-  })
-  const [currentCountryCode, setCurrentCountryCode] = useState('+55')
-  const [currentPhoneNumber, setCurrentPhoneNumber] = useState('')
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [confirmEmail, setConfirmEmail] = useState('')
   const [deleting, setDeleting] = useState(false)
 
+  const [formData, setFormData] = useState({
+    full_name: '',
+    phone_number: '',
+    subscription_status: 'active',
+    subscription_plan: 'premium'
+  })
+
   useEffect(() => {
-    if (user?.uid) {
+    if (user?.id) {
       fetchProfile()
     }
-  }, [user?.uid])
+  }, [user?.id])
 
   const fetchProfile = async () => {
     try {
       setLoading(true)
       
-      if (!user?.uid) {
+      if (!user?.id) {
         throw new Error('Usuário não autenticado')
       }
 
-      const { data, error } = await getProfile(user.uid)
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
 
       if (error) {
-        throw new Error(error)
+        throw new Error(error.message)
       }
 
       if (data) {
-        setProfile({
-          nome: data.full_name || user?.email?.split('@')[0] || '',
-          phone: data.phone || '',
-          email: data.email || user?.email || ''
+        setProfile(data)
+        setFormData({
+          full_name: data.full_name || '',
+          phone_number: data.phone_number || '',
+          subscription_status: data.subscription_status || 'active',
+          subscription_plan: data.subscription_plan || 'premium'
         })
-        
-        // Extrair código do país e número do telefone
-        if (data.phone) {
-          const phoneParts = data.phone.match(/^(\+\d{1,3})(.+)$/)
-          if (phoneParts) {
-            setCurrentCountryCode(phoneParts[1])
-            setCurrentPhoneNumber(phoneParts[2])
-          }
-        }
-      } else {
-        // Perfil não encontrado, usar dados básicos
-        setProfile({
-          nome: user?.email?.split('@')[0] || '',
-          phone: '',
-          email: user?.email || ''
-        })
-        setCurrentCountryCode('+55')
-        setCurrentPhoneNumber('')
       }
     } catch (error: any) {
       console.error('Erro ao carregar perfil:', error)
@@ -96,66 +79,35 @@ export default function Perfil() {
     setSaving(true)
 
     try {
-      // Only combine if we have both country code and phone number
-      let fullPhone = ''
-      let whatsappId = profile.whatsapp
-      
-      if (currentPhoneNumber.trim()) {
-        fullPhone = currentCountryCode + currentPhoneNumber.replace(/\D/g, '')
-        
-        // Se o telefone mudou, validar o WhatsApp
-        if (fullPhone !== profile.phone) {
-          console.log('Validando WhatsApp para número alterado:', fullPhone)
-          
-          try {
-            const whatsappValidation = await validateWhatsAppNumber(fullPhone.replace('+', ''))
-            
-            if (!whatsappValidation.exists) {
-              toast({
-                title: "Erro",
-                description: "Este número não possui WhatsApp ativo",
-                variant: "destructive",
-              })
-              setSaving(false)
-              return
-            }
-            
-            whatsappId = whatsappValidation.whatsappId
-          } catch (error: any) {
-            toast({
-              title: "Erro na validação do WhatsApp",
-              description: error.message,
-              variant: "destructive",
-            })
-            setSaving(false)
-            return
-          }
-        }
-      }
-
-      console.log('Saving profile with phone:', fullPhone)
-      console.log('Saving profile with whatsapp:', whatsappId)
-
-      if (!user?.uid) {
+      if (!user?.id) {
         throw new Error('Usuário não autenticado')
       }
 
-      const { error } = await updateProfile(user.uid, {
-        full_name: profile.nome,
-        phone: fullPhone,
-        whatsapp: whatsappId,
-        email: profile.email,
-      })
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: formData.full_name,
+          phone_number: formData.phone_number,
+          subscription_status: formData.subscription_status,
+          subscription_plan: formData.subscription_plan,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
 
       if (error) {
-        throw new Error(error)
+        throw new Error(error.message)
       }
 
       toast({
-        title: "Perfil atualizado com sucesso!",
-        description: "Suas informações foram salvas.",
+        title: "Perfil atualizado",
+        description: "Suas informações foram salvas com sucesso!",
       })
+
+      // Recarregar perfil
+      fetchProfile()
+      
     } catch (error: any) {
+      console.error('Erro ao atualizar perfil:', error)
       toast({
         title: "Erro ao atualizar perfil",
         description: error.message,
@@ -166,114 +118,69 @@ export default function Perfil() {
     }
   }
 
-  const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDeleteAccount = async () => {
     try {
-      setUploading(true)
+      setDeleting(true)
       
-      if (!event.target.files || event.target.files.length === 0) {
-        throw new Error('Você deve selecionar uma imagem para fazer upload.')
+      if (!user?.id) {
+        throw new Error('Usuário não autenticado')
       }
 
-      // TODO: Implementar upload de avatar com Firebase Storage
+      // Deletar perfil
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user.id)
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      // Fazer logout
+      await signOut()
+      navigate('/auth')
+      
       toast({
-        title: "Funcionalidade em desenvolvimento",
-        description: "Upload de avatar será implementado em breve.",
-        variant: "default",
+        title: "Conta deletada",
+        description: "Sua conta foi removida com sucesso.",
       })
+      
     } catch (error: any) {
+      console.error('Erro ao deletar conta:', error)
       toast({
-        title: "Erro ao fazer upload da imagem",
-        description: error.message,
-        variant: "destructive",
-      })
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
-
-  const handlePhoneChange = (phone: string) => {
-    console.log('Phone changed to:', phone)
-    setCurrentPhoneNumber(phone)
-  }
-
-  const handleCountryChange = (country_code: string) => {
-    console.log('Country code changed to:', country_code)
-    setCurrentCountryCode(country_code)
-  }
-
-  const handleDeleteAccount = async () => {
-    if (confirmEmail !== user?.email) {
-      toast({
-        title: "Erro",
-        description: "O email de confirmação não confere",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setDeleting(true)
-
-    try {
-      // Database tables don't exist yet
-      toast({
-        title: "Banco de dados indisponível",
-        description: "Aguarde a recriação das tabelas para usar esta funcionalidade",
-        variant: "destructive",
-      })
-    } catch (error: any) {
-      console.error('Erro completo ao remover conta:', error)
-      toast({
-        title: "Erro ao remover conta",
+        title: "Erro ao deletar conta",
         description: error.message,
         variant: "destructive",
       })
     } finally {
       setDeleting(false)
-      setConfirmEmail('')
     }
   }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Carregando perfil...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-8">
-      <div className="text-center md:text-left">
-        <h1 className="text-4xl font-bold tracking-tight">Meu Perfil</h1>
-        <p className="text-muted-foreground mt-2">Gerencie suas informações pessoais, assinatura e configurações de segurança</p>
+    <div className="space-y-6">
+      {/* Cabeçalho */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold">Perfil</h1>
+          <p className="text-gray-600">Gerencie suas informações pessoais</p>
+        </div>
       </div>
 
-      <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
-          <TabsTrigger value="profile" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            Perfil
-          </TabsTrigger>
-          <TabsTrigger value="subscription" className="flex items-center gap-2">
-            <CreditCard className="h-4 w-4" />
-            Assinatura
-          </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Segurança
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="profile" className="space-y-6">
+      <div className="grid gap-6 md:grid-cols-3">
+        {/* Informações do Perfil */}
+        <div className="md:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -281,150 +188,131 @@ export default function Perfil() {
                 Informações Pessoais
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                <div className="relative">
-                  <Avatar className="h-24 w-24">
-                    <AvatarImage src={profile.avatar_url} />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-lg">
-                      {profile.nome ? getInitials(profile.nome) : <User className="h-8 w-8" />}
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={profile?.avatar_url} />
+                    <AvatarFallback>
+                      {profile?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
                     </AvatarFallback>
                   </Avatar>
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                    disabled={uploading}
-                    onClick={() => document.getElementById('avatar-upload')?.click()}
-                  >
-                    <Camera className="h-4 w-4" />
-                  </Button>
-                  <input
-                    id="avatar-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={uploadAvatar}
-                    className="hidden"
+                  <div>
+                    <p className="font-medium">{profile?.full_name || 'Usuário'}</p>
+                    <p className="text-sm text-gray-600">{user?.email}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="full_name">Nome Completo</Label>
+                  <Input
+                    id="full_name"
+                    value={formData.full_name}
+                    onChange={(e) => setFormData({...formData, full_name: e.target.value})}
+                    placeholder="Seu nome completo"
                   />
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-semibold">{profile.nome || 'Sem nome'}</h3>
-                  <p className="text-muted-foreground">{profile.email}</p>
-                  {profile.whatsapp && (
-                    <p className="text-sm text-green-600 mt-1">WhatsApp: {profile.whatsapp}</p>
-                  )}
-                </div>
-              </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="nome">Nome completo</Label>
-                    <Input
-                      id="nome"
-                      value={profile.nome}
-                      onChange={(e) => setProfile(prev => ({ ...prev, nome: e.target.value }))}
-                      placeholder="Seu nome completo"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Telefone</Label>
-                    <PhoneInput
-                      id="phone"
-                      value={currentPhoneNumber}
-                      countryCode={currentCountryCode}
-                      onValueChange={handlePhoneChange}
-                      onCountryChange={handleCountryChange}
-                      required
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="phone_number">Telefone (WhatsApp)</Label>
+                  <Input
+                    id="phone_number"
+                    value={formData.phone_number}
+                    onChange={(e) => setFormData({...formData, phone_number: e.target.value})}
+                    placeholder="5511999999999"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Formato: 5511999999999 (sem +)
+                  </p>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  disabled={saving}
-                  className="w-full md:w-auto"
-                >
+                <div>
+                  <Label htmlFor="subscription_plan">Plano</Label>
+                  <Input
+                    id="subscription_plan"
+                    value={formData.subscription_plan}
+                    disabled
+                    className="bg-gray-100"
+                  />
+                </div>
+
+                <Button type="submit" disabled={saving}>
                   {saving ? 'Salvando...' : 'Salvar Alterações'}
                 </Button>
               </form>
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="subscription">
-          <SubscriptionInfo />
-        </TabsContent>
-
-        <TabsContent value="security" className="space-y-6">
-          <ChangePasswordForm />
-
-          <Card className="border-destructive/20">
+        {/* Sidebar */}
+        <div className="space-y-4">
+          {/* Status da Assinatura */}
+          <Card>
             <CardHeader>
-              <CardTitle className="text-destructive flex items-center gap-2">
-                <Trash2 className="h-5 w-5" />
-                Zona de Perigo
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Assinatura
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  A remoção da conta é permanente e não pode ser desfeita. Todos os seus dados, incluindo transações e lembretes, serão permanentemente apagados.
-                </p>
-                
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" className="w-full md:w-auto">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Remover Conta Permanentemente
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Confirmar Remoção de Conta</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Esta ação é irreversível. Todos os seus dados serão permanentemente apagados.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="confirm-email">
-                          Digite seu email para confirmar: <span className="font-semibold">{user?.email}</span>
-                        </Label>
-                        <Input
-                          id="confirm-email"
-                          type="email"
-                          placeholder="Confirme seu email"
-                          value={confirmEmail}
-                          onChange={(e) => setConfirmEmail(e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    <AlertDialogFooter>
-                      <AlertDialogCancel
-                        onClick={() => setConfirmEmail('')}
-                      >
-                        Cancelar
-                      </AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleDeleteAccount}
-                        disabled={deleting || confirmEmail !== user?.email}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        {deleting ? 'Removendo...' : 'Remover Conta'}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Status:</span>
+                  <Badge variant={profile?.subscription_status === 'active' ? 'default' : 'secondary'}>
+                    {profile?.subscription_status || 'active'}
+                  </Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Plano:</span>
+                  <span className="text-sm font-medium">{profile?.subscription_plan || 'premium'}</span>
+                </div>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+
+          {/* Ações */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Ações
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Button variant="outline" className="w-full" onClick={() => signOut()}>
+                Sair
+              </Button>
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-full">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Deletar Conta
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Deletar Conta</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação não pode ser desfeita. Isso irá remover permanentemente sua conta e todos os dados associados.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAccount}
+                      className="bg-red-600 hover:bg-red-700"
+                      disabled={deleting}
+                    >
+                      {deleting ? 'Deletando...' : 'Deletar Conta'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }

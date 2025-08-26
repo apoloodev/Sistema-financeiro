@@ -1,43 +1,21 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Logs imediatos para debug
-console.log('🚨 DEBUG: Iniciando configuração Supabase...')
-console.log('🚨 DEBUG: import.meta.env:', import.meta.env)
-console.log('🚨 DEBUG: VITE_SUPABASE_URL existe?', !!import.meta.env.VITE_SUPABASE_URL)
-console.log('🚨 DEBUG: VITE_SUPABASE_ANON_KEY existe?', !!import.meta.env.VITE_SUPABASE_ANON_KEY)
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+// Variáveis hardcoded temporariamente para teste
+const supabaseUrl = 'https://yjtsyuibemnkjfyonfjt.supabase.co'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlqdHN5dWliZW1ua2pmeW9uZmp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUwMjEwMDAsImV4cCI6MjA3MDU5NzAwMH0.YTvf5T80OMwhZYgK0vnWULnalBvtGUd68Z2g1LiI0kI'
 
 // Debug: verificar se as variáveis estão sendo carregadas
-console.log('🔧 Supabase Config (Updated):', {
+console.log('🔧 Supabase Config:', {
   url: supabaseUrl ? '✅ Configurada' : '❌ Não configurada',
-  key: supabaseAnonKey ? '✅ Configurada' : '❌ Não configurada',
-  keyPreview: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'N/A',
-  timestamp: new Date().toISOString()
+  key: supabaseAnonKey ? '✅ Configurada' : '❌ Não configurada'
 })
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('❌ Variáveis de ambiente do Supabase não configuradas!')
-  console.error('VITE_SUPABASE_URL:', supabaseUrl)
-  console.error('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Presente' : 'Ausente')
-  
-  // Forçar erro visível
-  throw new Error('🚨 CRÍTICO: Variáveis de ambiente do Supabase não configuradas! Verifique Vercel.')
+  throw new Error('Variáveis de ambiente do Supabase não configuradas!')
 }
 
-// Verificar se as chaves parecem válidas
-if (!supabaseUrl.includes('supabase.co')) {
-  console.error('❌ VITE_SUPABASE_URL parece inválida:', supabaseUrl)
-}
-
-if (!supabaseAnonKey.startsWith('eyJ')) {
-  console.error('❌ VITE_SUPABASE_ANON_KEY parece inválida:', supabaseAnonKey.substring(0, 50))
-}
-
-console.log('✅ Criando cliente Supabase...')
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
-console.log('✅ Cliente Supabase criado com sucesso!')
 
 export interface User {
   id: string
@@ -92,6 +70,7 @@ export interface Profile {
   avatar_url?: string;
   subscription_status?: string;
   subscription_plan?: string;
+  phone_number?: string; // Campo para identificação WhatsApp
   created_at: string;
   updated_at: string;
 }

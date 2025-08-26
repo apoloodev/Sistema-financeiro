@@ -1,411 +1,461 @@
 
-import { useState, useEffect, useMemo } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useAuth } from '@/hooks/useAuth'
-import { useLembretes } from '@/hooks/useLembretes'
 import { toast } from '@/hooks/use-toast'
-import { Plus, Edit, Trash2, Calendar, Clock, Search, Filter } from 'lucide-react'
+import { Plus, Edit, Trash2, Bell, Calendar, AlertCircle } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
-import type { Lembrete } from '@/integrations/firebase/types'
+interface Lembrete {
+  id: string
+  titulo: string
+  descricao?: string
+  valor?: number
+  data_vencimento: string
+  status: 'pendente' | 'pago' | 'atrasado'
+  user_id: string
+  created_at: string
+  updated_at: string
+}
 
 export default function Lembretes() {
   const { user } = useAuth()
-  const { 
-    lembretes, 
-    isLoading, 
-    error, 
-    fetchLembretes, 
-    createLembrete,
-    updateLembrete,
-    deleteLembrete,
-    clearError 
-  } = useLembretes()
+  const [lembretes, setLembretes] = useState<Lembrete[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingLembrete, setEditingLembrete] = useState<Lembrete | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+
   const [formData, setFormData] = useState({
+    titulo: '',
     descricao: '',
-    data: '',
-    valor: '',
+    valor: 0,
+    data_vencimento: '',
+    status: 'pendente' as 'pendente' | 'pago' | 'atrasado'
   })
 
-  // Filtrar lembretes
-  const filteredLembretes = useMemo(() => {
-    return lembretes.filter(lembrete => {
-      // Filtro de busca
-      const matchesSearch = !searchTerm || 
-        (lembrete.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
+  // Carregar dados
+  const fetchData = async () => {
+    try {
+      setIsLoading(true)
       
-      // Filtro de status (vencido, próximo, futuro)
-      let matchesStatus = true
-      if (statusFilter && lembrete.data) {
-        const lembreteDate = new Date(lembrete.data)
-        const now = new Date()
-        
-        switch (statusFilter) {
-          case 'vencido':
-            matchesStatus = lembreteDate < now
-            break
-          case 'proximo':
-            const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-            matchesStatus = lembreteDate >= now && lembreteDate <= weekFromNow
-            break
-          case 'futuro':
-            const weekFromNow2 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-            matchesStatus = lembreteDate > weekFromNow2
-            break
-        }
+      if (!user?.id) {
+        throw new Error('Usuário não autenticado')
       }
+
+      // Buscar lembretes
+      const { data, error } = await supabase
+        .from('lembretes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('data_vencimento', { ascending: true })
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      setLembretes(data || [])
       
-      return matchesSearch && matchesStatus
-    })
-  }, [lembretes, searchTerm, statusFilter])
-
-  useEffect(() => {
-    if (user?.uid) {
-      fetchLembretes()
+    } catch (error: any) {
+      console.error('Erro ao carregar lembretes:', error)
+      toast({
+        title: "Erro ao carregar lembretes",
+        description: error.message,
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
     }
-  }, [user?.uid]) // Removido fetchLembretes das dependências
+  }
 
+  // Carregar dados quando o componente montar
+  useEffect(() => {
+    if (user?.id) {
+      fetchData()
+    }
+  }, [user])
 
+  // Organizar lembretes por status
+  const lembretesPendentes = lembretes.filter(l => l.status === 'pendente')
+  const lembretesPagos = lembretes.filter(l => l.status === 'pago')
+  const lembretesAtrasados = lembretes.filter(l => l.status === 'atrasado')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
+    
     try {
-      const lembreteData = {
-        descricao: formData.descricao,
-        data: formData.data,
-        valor: parseFloat(formData.valor) || 0,
+      if (!user?.id) {
+        throw new Error('Usuário não autenticado')
       }
 
       if (editingLembrete) {
-        const result = await updateLembrete({
-          id: editingLembrete.id!,
-          updates: lembreteData
+        // Atualizar lembrete existente
+        const { error } = await supabase
+          .from('lembretes')
+          .update({
+            titulo: formData.titulo,
+            descricao: formData.descricao,
+            valor: formData.valor,
+            data_vencimento: formData.data_vencimento,
+            status: formData.status,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingLembrete.id)
+
+        if (error) {
+          throw new Error(error.message)
+        }
+
+        toast({
+          title: "Lembrete atualizado",
+          description: "Lembrete foi atualizado com sucesso!",
         })
-        if (result) {
-          setDialogOpen(false)
-          setEditingLembrete(null)
-          setFormData({
-            descricao: '',
-            data: '',
-            valor: '',
-          })
-        }
       } else {
-        const result = await createLembrete(lembreteData)
-        if (result) {
-          setDialogOpen(false)
-          setFormData({
-            descricao: '',
-            data: '',
-            valor: '',
+        // Criar novo lembrete
+        const { error } = await supabase
+          .from('lembretes')
+          .insert({
+            titulo: formData.titulo,
+            descricao: formData.descricao,
+            valor: formData.valor,
+            data_vencimento: formData.data_vencimento,
+            status: formData.status,
+            user_id: user.id
           })
+
+        if (error) {
+          throw new Error(error.message)
         }
+
+        toast({
+          title: "Lembrete criado",
+          description: "Novo lembrete foi criado com sucesso!",
+        })
       }
+
+      setDialogOpen(false)
+      setEditingLembrete(null)
+      setFormData({ titulo: '', descricao: '', valor: 0, data_vencimento: '', status: 'pendente' })
+      fetchData()
+      
     } catch (error: any) {
-      // O erro já é tratado pelo hook
+      console.error('Erro ao salvar lembrete:', error)
+      toast({
+        title: "Erro ao salvar lembrete",
+        description: error.message,
+        variant: "destructive",
+      })
     }
   }
 
   const handleEdit = (lembrete: Lembrete) => {
     setEditingLembrete(lembrete)
     setFormData({
+      titulo: lembrete.titulo,
       descricao: lembrete.descricao || '',
-      data: lembrete.data || '',
-      valor: lembrete.valor?.toString() || '',
+      valor: lembrete.valor || 0,
+      data_vencimento: lembrete.data_vencimento,
+      status: lembrete.status
     })
     setDialogOpen(true)
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este lembrete?')) return
-
-    try {
-      const result = await deleteLembrete(id)
-      if (result) {
-        // Sucesso - o hook já atualiza a lista
-      }
-    } catch (error: any) {
-      // O erro já é tratado pelo hook
-    }
-  }
-
-  const handleDeleteAll = async () => {
-    if (!confirm('Tem certeza que deseja excluir TODOS os lembretes? Esta ação não pode ser desfeita.')) {
+    if (!confirm('Tem certeza que deseja excluir este lembrete?')) {
       return
     }
 
     try {
-      console.log('🗑️ Deletando todos os lembretes...')
-      
-      // Deletar uma por uma (Firebase não tem delete em lote nativo)
-      const deletePromises = lembretes.map(lembrete => deleteLembrete(lembrete.id!))
-      await Promise.all(deletePromises)
-      
+      const { error } = await supabase
+        .from('lembretes')
+        .delete()
+        .eq('id', id)
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
       toast({
-        title: "Todos os lembretes excluídos",
-        description: `${lembretes.length} lembretes foram removidos com sucesso.`,
+        title: "Lembrete excluído",
+        description: "Lembrete foi removido com sucesso!",
       })
+      fetchData()
     } catch (error: any) {
-      console.error('❌ Erro ao deletar todos os lembretes:', error)
+      console.error('Erro ao deletar lembrete:', error)
       toast({
-        title: "Erro ao excluir",
-        description: error.message || "Erro ao excluir os lembretes",
+        title: "Erro ao excluir lembrete",
+        description: error.message,
         variant: "destructive",
       })
     }
   }
 
+  const handleStatusChange = async (id: string, newStatus: 'pendente' | 'pago' | 'atrasado') => {
+    try {
+      const { error } = await supabase
+        .from('lembretes')
+        .update({ 
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
 
+      if (error) {
+        throw new Error(error.message)
+      }
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value)
+      toast({
+        title: "Status atualizado",
+        description: "Status do lembrete foi alterado!",
+      })
+      fetchData()
+    } catch (error: any) {
+      console.error('Erro ao atualizar status:', error)
+      toast({
+        title: "Erro ao atualizar status",
+        description: error.message,
+        variant: "destructive",
+      })
+    }
   }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR')
   }
 
-  const isOverdue = (dateString: string) => {
-    return new Date(dateString) < new Date()
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value)
   }
 
-  const isToday = (dateString: string) => {
-    const today = new Date()
-    const date = new Date(dateString)
-    return date.toDateString() === today.toDateString()
-  }
-
-  const getDateStatus = (dateString: string) => {
-    if (isOverdue(dateString)) {
-      return { variant: 'destructive' as const, label: 'Vencido' }
-    }
-    if (isToday(dateString)) {
-      return { variant: 'default' as const, label: 'Hoje' }
-    }
-    const daysDiff = Math.ceil((new Date(dateString).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-    if (daysDiff <= 7) {
-      return { variant: 'secondary' as const, label: `${daysDiff} dias` }
-    }
-    return { variant: 'outline' as const, label: formatDate(dateString) }
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Carregando lembretes...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
+      {/* Cabeçalho */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900">Lembretes</h2>
-          <p className="text-gray-600">Gerencie seus lembretes de pagamentos e compromissos</p>
+          <h1 className="text-2xl font-bold">Lembretes</h1>
+          <p className="text-gray-600">Gerencie seus lembretes de pagamentos</p>
         </div>
-        <div className="flex gap-2">
-          {lembretes.length > 0 && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Remover Todos
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Remover todos os lembretes</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta ação não pode ser desfeita. Isso irá remover permanentemente todos os seus lembretes.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    Remover Todos
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90">
-                <Plus className="mr-2 h-4 w-4" />
-                Novo Lembrete
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingLembrete ? 'Editar Lembrete' : 'Novo Lembrete'}
-                </DialogTitle>
-                <DialogDescription>
-                  {editingLembrete 
-                    ? 'Faça as alterações necessárias no lembrete.' 
-                    : 'Adicione um novo lembrete para não esquecer pagamentos importantes.'}
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="descricao">Descrição</Label>
-                  <Textarea
-                    id="descricao"
-                    placeholder="Ex: Pagar conta de luz, Aniversário da Maria..."
-                    value={formData.descricao}
-                    onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="data">Data</Label>
-                    <Input
-                      id="data"
-                      type="date"
-                      value={formData.data}
-                      onChange={(e) => setFormData({...formData, data: e.target.value})}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="valor">Valor (opcional)</Label>
-                    <Input
-                      id="valor"
-                      type="number"
-                      step="0.01"
-                      placeholder="0,00"
-                      value={formData.valor}
-                      onChange={(e) => setFormData({...formData, valor: e.target.value})}
-                    />
-                  </div>
-                </div>
-                <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
-                  {editingLembrete ? 'Atualizar' : 'Adicionar'} Lembrete
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+        <Button onClick={() => {
+          setEditingLembrete(null)
+          setFormData({ titulo: '', descricao: '', valor: 0, data_vencimento: '', status: 'pendente' })
+          setDialogOpen(true)
+        }}>
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Lembrete
+        </Button>
       </div>
 
-      {/* Filtros */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Pesquisar lembretes..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+      {/* Cards de resumo */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="border-l-4 border-l-yellow-500">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Pendentes</p>
+                <p className="text-2xl font-bold text-yellow-600">{lembretesPendentes.length}</p>
+              </div>
+              <Bell className="h-8 w-8 text-yellow-500" />
+            </div>
+          </CardContent>
+        </Card>
 
-        <Select value={statusFilter || 'all'} onValueChange={(value) => setStatusFilter(value === 'all' ? '' : value)}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os status</SelectItem>
-            <SelectItem value="vencido">Vencidos</SelectItem>
-            <SelectItem value="proximo">Próximos (7 dias)</SelectItem>
-            <SelectItem value="futuro">Futuros</SelectItem>
-          </SelectContent>
-        </Select>
+        <Card className="border-l-4 border-l-red-500">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Atrasados</p>
+                <p className="text-2xl font-bold text-red-600">{lembretesAtrasados.length}</p>
+              </div>
+              <AlertCircle className="h-8 w-8 text-red-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-green-500">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Pagos</p>
+                <p className="text-2xl font-bold text-green-600">{lembretesPagos.length}</p>
+              </div>
+              <Calendar className="h-8 w-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="grid gap-4">
-        {isLoading ? (
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-2">
-                      <div className="h-4 bg-gray-200 rounded w-32"></div>
-                      <div className="h-3 bg-gray-200 rounded w-20"></div>
-                    </div>
-                    <div className="h-6 bg-gray-200 rounded w-20"></div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : filteredLembretes.length === 0 ? (
+      {/* Lista de lembretes */}
+      <div className="space-y-4">
+        {lembretes.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
-              <Calendar className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-gray-500 mb-4">Nenhum lembrete encontrado</p>
-              <Button onClick={() => setDialogOpen(true)} className="bg-primary hover:bg-primary/90">
-                Adicionar primeiro lembrete
+              <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 mb-4">Nenhum lembrete criado</p>
+              <Button onClick={() => setDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Criar primeiro lembrete
               </Button>
             </CardContent>
           </Card>
         ) : (
-          filteredLembretes.map((lembrete) => {
-            const dateStatus = lembrete.data ? getDateStatus(lembrete.data) : null
-            return (
-              <Card key={lembrete.id} className={`hover:shadow-md transition-shadow ${
-                lembrete.data && isOverdue(lembrete.data) ? 'border-red-200 bg-red-50' : ''
-              }`}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Calendar className="h-5 w-5 text-blue-600" />
-                        <h3 className="font-semibold">{lembrete.descricao}</h3>
-                        {dateStatus && (
-                          <Badge variant={dateStatus.variant}>
-                            {dateStatus.label}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-600 space-y-1">
-                        {lembrete.data && (
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
-                            <span>Data: {formatDate(lembrete.data)}</span>
-                          </div>
-                        )}
-                        {lembrete.valor && (
-                          <p>Valor: {formatCurrency(lembrete.valor)}</p>
-                        )}
-                      </div>
+          lembretes.map((lembrete) => (
+            <Card key={lembrete.id}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <h3 className="font-medium">{lembrete.titulo}</h3>
+                      <Badge 
+                        variant={
+                          lembrete.status === 'pago' ? 'default' :
+                          lembrete.status === 'atrasado' ? 'destructive' : 'secondary'
+                        }
+                      >
+                        {lembrete.status}
+                      </Badge>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEdit(lembrete)}
-                        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDelete(lembrete.id)}
-                        className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                    {lembrete.descricao && (
+                      <p className="text-sm text-gray-600 mb-2">{lembrete.descricao}</p>
+                    )}
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <span className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        {formatDate(lembrete.data_vencimento)}
+                      </span>
+                      {lembrete.valor && lembrete.valor > 0 && (
+                        <span>{formatCurrency(lembrete.valor)}</span>
+                      )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            )
-          })
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(lembrete)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDelete(lembrete.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
         )}
       </div>
+
+      {/* Dialog para criar/editar lembrete */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingLembrete ? 'Editar Lembrete' : 'Novo Lembrete'}
+            </DialogTitle>
+            <DialogDescription>
+              {editingLembrete 
+                ? 'Faça as alterações necessárias no lembrete.' 
+                : 'Crie um novo lembrete de pagamento.'}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="titulo">Título</Label>
+              <Input
+                id="titulo"
+                value={formData.titulo}
+                onChange={(e) => setFormData({...formData, titulo: e.target.value})}
+                placeholder="Ex: Conta de luz, Aluguel..."
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="descricao">Descrição (opcional)</Label>
+              <Textarea
+                id="descricao"
+                value={formData.descricao}
+                onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+                placeholder="Detalhes adicionais..."
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="valor">Valor (opcional)</Label>
+              <Input
+                id="valor"
+                type="number"
+                step="0.01"
+                value={formData.valor}
+                onChange={(e) => setFormData({...formData, valor: parseFloat(e.target.value) || 0})}
+                placeholder="0,00"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="data_vencimento">Data de Vencimento</Label>
+              <Input
+                id="data_vencimento"
+                type="date"
+                value={formData.data_vencimento}
+                onChange={(e) => setFormData({...formData, data_vencimento: e.target.value})}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="status">Status</Label>
+              <select
+                id="status"
+                value={formData.status}
+                onChange={(e) => setFormData({...formData, status: e.target.value as any})}
+                className="w-full p-2 border rounded-md"
+              >
+                <option value="pendente">Pendente</option>
+                <option value="pago">Pago</option>
+                <option value="atrasado">Atrasado</option>
+              </select>
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit">
+                {editingLembrete ? 'Atualizar' : 'Criar'} Lembrete
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
