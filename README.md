@@ -1,174 +1,141 @@
-# 💰 Sistema Financeiro - POUPE AGORA
+# Sistema Financeiro - Controle de Despesas
 
-Um sistema completo de gestão financeira pessoal desenvolvido com React, TypeScript e Firebase.
+Sistema completo de controle financeiro com categorias hierárquicas, integração Supabase e interface moderna.
 
 ## 🚀 Funcionalidades
 
-- **📊 Dashboard**: Visualização de receitas, despesas e saldo
-- **💳 Transações**: Gerenciamento completo de receitas e despesas
-- **📂 Categorias**: Organização por categorias personalizáveis
-- **⏰ Lembretes**: Sistema de lembretes para contas e compromissos
-- **📈 Relatórios**: Relatórios detalhados e gráficos
-- **👤 Perfil**: Gerenciamento de perfil do usuário
-- **🔐 Autenticação**: Login com email/senha e Google
-- **📱 Responsivo**: Interface adaptável para mobile e desktop
+### ✨ Sistema de Categorias Hierárquicas
+- **9 Categorias Principais** com ícones e cores
+- **42 Subcategorias** organizadas hierarquicamente
+- **Interface intuitiva** com seletor hierárquico
+- **Migração automática** de transações antigas
+
+### 📊 Gestão Financeira
+- Controle de receitas e despesas
+- Categorização automática
+- Relatórios e gráficos
+- Filtros por período
+
+### 🔐 Autenticação e Perfil
+- Login com Supabase Auth
+- Perfil personalizável
+- Sistema de assinatura simplificado
 
 ## 🛠️ Tecnologias
 
-- **Frontend**: React 18 + TypeScript + Vite
-- **UI**: Shadcn/ui + Tailwind CSS
-- **Backend**: Firebase (Authentication + Firestore)
-- **Autenticação**: Firebase Auth (Email/Senha + Google)
-- **Banco de Dados**: Firestore (NoSQL)
-- **Deploy**: Vercel/Netlify (recomendado)
+- **Frontend:** React + TypeScript + Vite
+- **UI:** Tailwind CSS + Shadcn/ui
+- **Backend:** Supabase (PostgreSQL)
+- **Autenticação:** Supabase Auth
+- **Deploy:** Vercel
 
 ## 📦 Instalação
 
-1. **Clone o repositório**
+1. **Clone o repositório:**
 ```bash
-git clone https://github.com/apoloodev/Sistema-financeiro.git
-cd Sistema-financeiro
+git clone https://github.com/seu-usuario/sistema-financeiro.git
+cd sistema-financeiro
 ```
 
-2. **Instale as dependências**
+2. **Instale as dependências:**
 ```bash
 npm install
 ```
 
-3. **Configure o Firebase**
-   - Crie um projeto no [Firebase Console](https://console.firebase.google.com/)
-   - Ative Authentication (Email/Senha e Google)
-   - Crie um banco Firestore
-   - Configure as regras de segurança
-   - Copie as credenciais para `.env.local`
-
-4. **Configure as variáveis de ambiente**
+3. **Configure as variáveis de ambiente:**
 ```bash
-cp env.firebase.example .env.local
-# Edite .env.local com suas credenciais do Firebase
+cp env.example .env.local
 ```
 
-5. **Execute o projeto**
+Edite o `.env.local` com suas credenciais do Supabase:
+```env
+VITE_SUPABASE_URL=sua_url_do_supabase
+VITE_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
+```
+
+4. **Execute o projeto:**
 ```bash
 npm run dev
 ```
 
-## 🔧 Configuração do Firebase
+## 🗄️ Configuração do Banco de Dados
 
-### 1. Criar Projeto
-- Acesse [Firebase Console](https://console.firebase.google.com/)
-- Clique em "Adicionar projeto"
-- Digite o nome: "Sistema Financeiro"
-- Siga os passos de configuração
+### 1. Execute o Script de Categorias Hierárquicas
 
-### 2. Configurar Authentication
-- No menu lateral, clique em "Authentication"
-- Clique em "Get started"
-- Em "Sign-in method", ative:
-  - Email/Password
-  - Google
+No **Supabase SQL Editor**, execute o script `setup-categorias-final.sql` para configurar:
 
-### 3. Configurar Firestore
-- No menu lateral, clique em "Firestore Database"
-- Clique em "Create database"
-- Escolha "Start in test mode"
-- Selecione a região mais próxima
+- Categorias principais com ícones
+- Subcategorias organizadas
+- Estrutura hierárquica completa
 
-### 4. Configurar Índices
-Crie os seguintes índices compostos no Firestore:
+### 2. Migre Transações Antigas
 
-**Coleção: transacoes**
-- userid (Ascending) + quando (Descending)
+Execute o script `migrar-transacoes-antigas.sql` para migrar transações existentes para as novas categorias.
 
-**Coleção: Categoria**
-- userid (Ascending) + created_at (Descending)
+## 🎨 Estrutura de Categorias
 
-**Coleção: Lembretes**
-- userid (Ascending) + data (Ascending)
+### Categorias Principais Implementadas:
 
-### 5. Obter Credenciais
-- No menu lateral, clique em "Project settings"
-- Role até "Your apps"
-- Clique em "Add app" → "Web"
-- Copie as credenciais para `.env.local`
+- **🚗 Transporte** → Gasolina, Uber/Táxi, Ônibus/Metrô, Manutenção
+- **🍽️ Alimentação** → Supermercado, Restaurante, Fast Food, Cafeteria  
+- **🏠 Moradia** → Aluguel, Conta de Luz, Água, Internet
+- **💰 Receitas** → Salário, Freelance, Investimentos, Presentes
+- **💊 Saúde** → (Sem subcategorias)
+- **🎮 Lazer** → (Sem subcategorias)
+- **📚 Educação** → (Sem subcategorias)
+- **👕 Vestuário** → (Sem subcategorias)
+- **📦 Outros** → (Sem subcategorias)
 
-## 📁 Estrutura do Projeto
+## 🔧 Desenvolvimento
+
+### Estrutura de Arquivos
 
 ```
 src/
-├── components/          # Componentes reutilizáveis
-│   ├── auth/           # Componentes de autenticação
-│   ├── dashboard/      # Componentes do dashboard
-│   ├── transactions/   # Componentes de transações
-│   ├── categories/     # Componentes de categorias
-│   ├── reminders/      # Componentes de lembretes
-│   └── ui/            # Componentes de UI (shadcn/ui)
-├── hooks/              # Custom hooks
-├── integrations/       # Integrações externas
-│   └── firebase/      # Configuração e serviços do Firebase
-├── pages/              # Páginas da aplicação
-├── types/              # Definições de tipos TypeScript
-└── utils/              # Utilitários
+├── components/
+│   ├── transactions/
+│   │   └── HierarchicalCategorySelector.tsx  # Seletor de categorias
+│   └── ui/                                   # Componentes Shadcn/ui
+├── hooks/
+│   ├── useAuth.tsx                          # Hook de autenticação
+│   └── useTransacoes.ts                     # Hook de transações
+├── lib/
+│   └── supabase.ts                          # Configuração Supabase
+├── pages/
+│   ├── Dashboard.tsx                        # Dashboard principal
+│   ├── Transacoes.tsx                       # Lista de transações
+│   └── Perfil.tsx                           # Perfil do usuário
+└── services/
+    └── transacoes.ts                        # Serviços de transações
 ```
 
-## 🔐 Variáveis de Ambiente
+### Scripts Disponíveis
 
-Crie um arquivo `.env.local` na raiz do projeto:
-
-```env
-VITE_FIREBASE_API_KEY=sua-api-key
-VITE_FIREBASE_AUTH_DOMAIN=seu-projeto.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=seu-projeto-id
-VITE_FIREBASE_STORAGE_BUCKET=seu-projeto.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
-VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
+```bash
+npm run dev          # Desenvolvimento
+npm run build        # Build para produção
+npm run preview      # Preview do build
+npm run lint         # Linting
 ```
 
 ## 🚀 Deploy
 
 ### Vercel (Recomendado)
-1. Conecte seu repositório ao Vercel
+
+1. Conecte seu repositório à Vercel
 2. Configure as variáveis de ambiente
 3. Deploy automático a cada push
 
-### Netlify
-1. Conecte seu repositório ao Netlify
-2. Configure as variáveis de ambiente
-3. Build command: `npm run build`
-4. Publish directory: `dist`
+### Variáveis de Ambiente Necessárias
 
-## 📱 Funcionalidades Principais
+```env
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_ANON_KEY=sua_chave_anonima
+```
 
-### Dashboard
-- Resumo financeiro mensal
-- Gráficos de receitas vs despesas
-- Lembretes próximos
-- Dicas financeiras
+## 📝 Licença
 
-### Transações
-- Adicionar receitas e despesas
-- Editar transações existentes
-- Deletar transações
-- Filtros por categoria, tipo e data
-- Busca por estabelecimento
-
-### Categorias
-- Criar categorias personalizadas
-- Editar categorias existentes
-- Deletar categorias
-- Tags para organização
-
-### Lembretes
-- Criar lembretes de contas
-- Definir valores e datas
-- Visualizar próximos vencimentos
-- Marcar como pagos
-
-### Relatórios
-- Relatórios mensais/anuais
-- Exportação em PDF
-- Gráficos detalhados
-- Análise de gastos por categoria
+MIT License - veja o arquivo [LICENSE](LICENSE) para detalhes.
 
 ## 🤝 Contribuição
 
@@ -178,26 +145,10 @@ VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
 4. Push para a branch (`git push origin feature/AmazingFeature`)
 5. Abra um Pull Request
 
-## 📄 Licença
+## 📞 Suporte
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
-## 👨‍💻 Autor
-
-**Apolo Dev**
-- GitHub: [@apoloodev](https://github.com/apoloodev)
-- LinkedIn: [Apolo Dev](https://linkedin.com/in/apoloodev)
-
-## 🙏 Agradecimentos
-
-- [Shadcn/ui](https://ui.shadcn.com/) - Componentes de UI
-- [Firebase](https://firebase.google.com/) - Backend e autenticação
-- [Vite](https://vitejs.dev/) - Build tool
-- [React](https://reactjs.org/) - Framework frontend
-- [TypeScript](https://www.typescriptlang.org/) - Tipagem estática
+Para dúvidas ou problemas, abra uma issue no GitHub ou entre em contato.
 
 ---
 
-⭐ Se este projeto te ajudou, considere dar uma estrela no repositório!
-
-🚀 **Deploy Status**: Configurado para Vercel com configurações padrão
+**Desenvolvido com ❤️ para controle financeiro eficiente**
