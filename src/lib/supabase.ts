@@ -1,5 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 
+// Logs imediatos para debug
+console.log('🚨 DEBUG: Iniciando configuração Supabase...')
+console.log('🚨 DEBUG: import.meta.env:', import.meta.env)
+console.log('🚨 DEBUG: VITE_SUPABASE_URL existe?', !!import.meta.env.VITE_SUPABASE_URL)
+console.log('🚨 DEBUG: VITE_SUPABASE_ANON_KEY existe?', !!import.meta.env.VITE_SUPABASE_ANON_KEY)
+
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
@@ -15,9 +21,23 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('❌ Variáveis de ambiente do Supabase não configuradas!')
   console.error('VITE_SUPABASE_URL:', supabaseUrl)
   console.error('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Presente' : 'Ausente')
+  
+  // Forçar erro visível
+  throw new Error('🚨 CRÍTICO: Variáveis de ambiente do Supabase não configuradas! Verifique Vercel.')
 }
 
+// Verificar se as chaves parecem válidas
+if (!supabaseUrl.includes('supabase.co')) {
+  console.error('❌ VITE_SUPABASE_URL parece inválida:', supabaseUrl)
+}
+
+if (!supabaseAnonKey.startsWith('eyJ')) {
+  console.error('❌ VITE_SUPABASE_ANON_KEY parece inválida:', supabaseAnonKey.substring(0, 50))
+}
+
+console.log('✅ Criando cliente Supabase...')
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+console.log('✅ Cliente Supabase criado com sucesso!')
 
 export interface User {
   id: string
