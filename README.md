@@ -129,9 +129,19 @@ npm run lint         # Linting
 ### Variáveis de Ambiente Necessárias
 
 ```env
-VITE_SUPABASE_URL=https://seu-projeto.supabase.co
-VITE_SUPABASE_ANON_KEY=sua_chave_anonima
+VITE_SUPABASE_URL=https://yjtsyuibemnkjfyonfjt.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlqdHN5dWliZW1ua2pmeW9uZmp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUwMjEwMDAsImV4cCI6MjA3MDU5NzAwMH0.YTvf5T80OMwhZYgK0vnWULnalBvtGUd68Zg1LiI0kI
 ```
+
+### ⚠️ Importante para Deploy
+
+**Se você estiver recriando o projeto na Vercel:**
+
+1. **Delete o projeto atual** na Vercel
+2. **Crie um novo projeto** conectando ao mesmo repositório GitHub
+3. **Configure as variáveis de ambiente** imediatamente após criar o projeto
+4. **Aguarde o primeiro deploy** terminar
+5. **Teste o login** para confirmar que está funcionando
 
 ## 📝 Licença
 
