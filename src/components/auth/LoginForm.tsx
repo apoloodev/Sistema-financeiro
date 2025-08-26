@@ -57,9 +57,7 @@ export function LoginForm({ onForgotPassword, onRegister }: LoginFormProps) {
     setLoading(false)
   }
 
-  const handleSubscribeClick = () => {
-    navigate('/plano')
-  }
+
 
   return (
     <div className="w-full mx-auto">
@@ -119,15 +117,6 @@ export function LoginForm({ onForgotPassword, onRegister }: LoginFormProps) {
       </form>
       
       <div className="mt-6 space-y-4 text-center">
-        <Button
-          onClick={handleSubscribeClick}
-          variant="outline"
-          className="w-full h-12 bg-white font-semibold hover:bg-gray-50 transition-all duration-200"
-          style={{ borderColor: '#0d0f1a', color: '#0d0f1a' }}
-        >
-          Adquira já
-        </Button>
-        
         <div className="space-y-2">
           <Button
             variant="link"
