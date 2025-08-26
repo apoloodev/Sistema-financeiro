@@ -7,12 +7,12 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { ThemeProvider } from '@/hooks/useTheme'
 import { AuthProvider } from '@/hooks/useAuth'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import AppLayout from '@/components/ui/sidebar'
-import Login from '@/pages/Login'
+import { AppLayout } from '@/components/layout/AppLayout'
+import Auth from '@/pages/Auth'
 import Dashboard from '@/pages/Dashboard'
 import Transacoes from '@/pages/Transacoes'
 import Perfil from '@/pages/Perfil'
-import ProtectedRoute from '@/components/auth/ProtectedRoute'
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 
 function App() {
   return (
@@ -21,7 +21,7 @@ function App() {
         <TooltipProvider>
           <Router>
             <Routes>
-              <Route path="/login" element={<Login />} />
+              <Route path="/auth" element={<Auth />} />
               <Route
                 path="/"
                 element={
