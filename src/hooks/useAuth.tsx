@@ -1,10 +1,10 @@
 
 import { useState, useEffect, createContext, useContext } from 'react'
-import { onAuthChange, signIn as firebaseSignIn, signUp as firebaseSignUp, signInWithGoogle as firebaseSignInWithGoogle, signOutUser } from '@/integrations/firebase/services'
-import type { FirebaseUser } from '@/integrations/firebase/types'
+import { supabase } from '@/lib/supabase'
+import type { User } from '@supabase/supabase-js'
 
 interface AuthContextType {
-  user: FirebaseUser | null
+  user: User | null
   loading: boolean
   isAuthenticated: boolean
   signIn: (email: string, password: string) => Promise<{ error: any }>
@@ -17,63 +17,146 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<FirebaseUser | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    console.log('🔐 AuthProvider: Iniciando listener de autenticação...')
+    console.log('🔐 AuthProvider: Iniciando listener de autenticação Supabase...')
     
-    // Configurar listener de mudança de estado de autenticação
-    const unsubscribe = onAuthChange((firebaseUser) => {
-      console.log('🔐 AuthProvider: Estado de autenticação mudou:', firebaseUser ? 'Usuário logado' : 'Usuário não logado')
-      
-      if (firebaseUser) {
-        console.log('🔐 AuthProvider: Dados do usuário:', {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName
-        })
-        
-        // Converter Firebase User para nosso tipo
-        const user: FirebaseUser = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
-          photoURL: firebaseUser.photoURL
-        }
-        setUser(user)
-      } else {
-        console.log('🔐 AuthProvider: Nenhum usuário autenticado')
-        setUser(null)
+    // Obter sessão atual
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        console.log('🔐 AuthProvider: Sessão encontrada:', session.user.email)
+        setUser(session.user)
       }
       setLoading(false)
-    })
+    }
 
-    return () => unsubscribe()
+    getSession()
+
+    // Configurar listener de mudança de estado de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('🔐 AuthProvider: Evento de autenticação:', event, session?.user?.email)
+        
+        if (session?.user) {
+          console.log('🔐 AuthProvider: Usuário logado:', session.user.email)
+          setUser(session.user)
+        } else {
+          console.log('🔐 AuthProvider: Usuário não logado')
+          setUser(null)
+        }
+        setLoading(false)
+      }
+    )
+
+    return () => subscription.unsubscribe()
   }, [])
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await firebaseSignIn(email, password)
-    return { error }
+    try {
+      console.log('🔐 Tentando login com Supabase:', email)
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) {
+        console.error('🔐 Erro no login Supabase:', error)
+        return { error }
+      }
+
+      console.log('🔐 Login Supabase bem-sucedido:', data.user?.email)
+      return { error: null }
+    } catch (error: any) {
+      console.error('🔐 Erro inesperado no login:', error)
+      return { error }
+    }
   }
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    const { error } = await firebaseSignUp(email, password, fullName)
-    return { error }
+    try {
+      console.log('🔐 Tentando cadastro com Supabase:', email)
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          }
+        }
+      })
+
+      if (error) {
+        console.error('🔐 Erro no cadastro Supabase:', error)
+        return { error }
+      }
+
+      console.log('🔐 Cadastro Supabase bem-sucedido:', data.user?.email)
+      return { error: null }
+    } catch (error: any) {
+      console.error('🔐 Erro inesperado no cadastro:', error)
+      return { error }
+    }
   }
 
   const signInWithGoogle = async () => {
-    const { error } = await firebaseSignInWithGoogle()
-    return { error }
+    try {
+      console.log('🔐 Tentando login Google com Supabase')
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      })
+
+      if (error) {
+        console.error('🔐 Erro no login Google Supabase:', error)
+        return { error }
+      }
+
+      console.log('🔐 Login Google Supabase iniciado')
+      return { error: null }
+    } catch (error: any) {
+      console.error('🔐 Erro inesperado no login Google:', error)
+      return { error }
+    }
   }
 
   const signOut = async () => {
-    await signOutUser()
+    try {
+      console.log('🔐 Fazendo logout do Supabase')
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        console.error('🔐 Erro no logout:', error)
+      } else {
+        console.log('🔐 Logout bem-sucedido')
+        setUser(null)
+      }
+    } catch (error) {
+      console.error('🔐 Erro inesperado no logout:', error)
+    }
   }
 
   const resetPassword = async (email: string) => {
-    // TODO: Implementar reset de senha com Firebase
-    return { error: 'Funcionalidade em desenvolvimento' }
+    try {
+      console.log('🔐 Tentando reset de senha:', email)
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`
+      })
+
+      if (error) {
+        console.error('🔐 Erro no reset de senha:', error)
+        return { error }
+      }
+
+      console.log('🔐 Email de reset enviado')
+      return { error: null }
+    } catch (error: any) {
+      console.error('🔐 Erro inesperado no reset de senha:', error)
+      return { error }
+    }
   }
 
   const isAuthenticated = !!user
