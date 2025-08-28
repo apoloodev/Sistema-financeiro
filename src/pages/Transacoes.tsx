@@ -13,6 +13,7 @@ import { TransacoesService } from '@/services/transacoes'
 import { toast } from '@/hooks/use-toast'
 import { Plus, Edit, Trash2, TrendingUp, TrendingDown } from 'lucide-react'
 import { formatCurrency } from '@/utils/currency'
+import { formatDate, formatTime } from '@/utils/date'
 import type { Transacao } from '@/lib/supabase'
 
 export default function Transacoes() {
@@ -201,7 +202,15 @@ export default function Transacoes() {
                     </div>
                     <div>
                       <p className="font-medium">{transacao.estabelecimento}</p>
-                      <p className="text-sm text-gray-600">{transacao.quando}</p>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <span>{formatDate(transacao.quando)}</span>
+                        {transacao.created_at && (
+                          <>
+                            <span>•</span>
+                            <span>{formatTime(transacao.created_at)}</span>
+                          </>
+                        )}
+                      </div>
                       {transacao.detalhes && (
                         <p className="text-sm text-gray-500">{transacao.detalhes}</p>
                       )}

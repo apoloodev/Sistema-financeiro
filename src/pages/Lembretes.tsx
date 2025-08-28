@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from '@/hooks/use-toast'
 import { Plus, Edit, Trash2, Bell, Calendar, AlertCircle } from 'lucide-react'
+import { formatCurrency } from '@/utils/currency'
+import { formatDate } from '@/utils/date'
 import { supabase } from '@/lib/supabase'
 
 interface Lembrete {
@@ -224,16 +226,7 @@ export default function Lembretes() {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR')
-  }
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value)
-  }
 
   if (isLoading) {
     return (

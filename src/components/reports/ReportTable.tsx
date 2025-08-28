@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { TrendingUp, TrendingDown } from 'lucide-react'
 import { formatCurrency } from '@/utils/currency'
+import { formatDate } from '@/utils/date'
 import { ReportTransaction } from '@/hooks/useReports'
 
 interface ReportTableProps {
@@ -11,10 +12,6 @@ interface ReportTableProps {
 }
 
 export function ReportTable({ transactions }: ReportTableProps) {
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '-'
-    return new Date(dateString).toLocaleDateString('pt-BR')
-  }
 
   return (
     <Card>

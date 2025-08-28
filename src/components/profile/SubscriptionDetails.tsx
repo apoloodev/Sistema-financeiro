@@ -1,15 +1,13 @@
 
 import { Calendar, DollarSign, Clock, RefreshCw, Tag } from 'lucide-react'
+import { formatDate } from '@/utils/date'
 import type { SubscriptionData } from '@/types/subscription'
 
 interface SubscriptionDetailsProps {
   subscriptionData: SubscriptionData
 }
 
-const formatDate = (dateString: string | null): string => {
-  if (!dateString) return 'Não informado'
-  return new Date(dateString).toLocaleDateString('pt-BR')
-}
+
 
 const formatCurrency = (value: number | null): string => {
   if (!value) return 'R$ 0,00'

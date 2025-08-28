@@ -8,6 +8,7 @@ import { useSubscription } from '@/hooks/useSubscription'
 import { cancelSubscription, renewSubscription } from '@/integrations/firebase/subscriptionService'
 import { toast } from '@/hooks/use-toast'
 import { CreditCard, RefreshCw, AlertCircle, CheckCircle, XCircle, Calendar, DollarSign } from 'lucide-react'
+import { formatDate } from '@/utils/date'
 import { useNavigate } from 'react-router-dom'
 
 export function SubscriptionInfo() {
@@ -105,13 +106,7 @@ export function SubscriptionInfo() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
-  };
+
 
   if (loading) {
     return (

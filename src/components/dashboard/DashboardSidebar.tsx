@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar, Lightbulb } from 'lucide-react'
 import { formatCurrency } from '@/utils/currency'
+import { formatDate } from '@/utils/date'
 import type { Lembrete } from '@/integrations/firebase/types'
 
 interface DashboardSidebarProps {
@@ -38,7 +39,7 @@ export function DashboardSidebar({ lembretes }: DashboardSidebarProps) {
             <div className="space-y-2">
               <p className="font-medium">{proximoLembrete.descricao}</p>
               <p className="text-sm text-muted-foreground">
-                {new Date(proximoLembrete.data!).toLocaleDateString('pt-BR')}
+                {formatDate(proximoLembrete.data!)}
               </p>
               {proximoLembrete.valor && (
                 <p className="text-sm font-medium text-primary">
