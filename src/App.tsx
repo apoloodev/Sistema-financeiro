@@ -14,6 +14,7 @@ import Transacoes from '@/pages/Transacoes'
 import Categorias from '@/pages/Categorias'
 import Relatorios from '@/pages/Relatorios'
 import Lembretes from '@/pages/Lembretes'
+import Metas from '@/pages/Metas'
 import Perfil from '@/pages/Perfil'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 
@@ -35,11 +36,12 @@ function App() {
               >
                 <Route index element={<Dashboard />} />
                 <Route path="dashboard" element={<Dashboard />} />
-                <Route path="transacoes" element={<Transacoes />} />
-                <Route path="categorias" element={<Categorias />} />
-                <Route path="relatorios" element={<Relatorios />} />
-                <Route path="lembretes" element={<Lembretes />} />
-                <Route path="perfil" element={<Perfil />} />
+                            <Route path="transacoes" element={<Transacoes />} />
+            <Route path="categorias" element={<Categorias />} />
+            <Route path="relatorios" element={<Relatorios />} />
+            <Route path="lembretes" element={<Lembretes />} />
+            <Route path="metas" element={<Metas />} />
+            <Route path="perfil" element={<Perfil />} />
               </Route>
               <Route path="/dashboard" element={<Navigate to="/" replace />} />
             </Routes>
