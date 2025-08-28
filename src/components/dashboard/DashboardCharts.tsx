@@ -3,12 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { formatCurrency } from '@/utils/currency'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { useState, useEffect } from 'react'
-import { getCategorias } from '@/integrations/firebase/services'
 import { useAuth } from '@/hooks/useAuth'
-import type { Transacao, Categoria } from '@/integrations/firebase/types'
+import type { Categoria } from '@/lib/supabase'
+import { TransacoesService } from '@/services/transacoes'
 
 interface DashboardChartsProps {
-  transacoes: Transacao[]
+  transacoes: any[]
 }
 
 const COLORS = ['#4361ee', '#7209b7', '#f72585', '#4cc9f0', '#4895ef', '#4361ee']
@@ -18,35 +18,29 @@ export function DashboardCharts({ transacoes }: DashboardChartsProps) {
   const [categorias, setCategorias] = useState<Categoria[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Buscar categorias do usuário
+  // Buscar categorias do usuário via Supabase
   useEffect(() => {
     const fetchCategorias = async () => {
-      if (!user?.uid) return
-      
+      if (!user?.id) return
       try {
-        const { data, error } = await getCategorias(user.uid)
-        if (!error && data) {
-          setCategorias(data)
-        }
+        const data = await TransacoesService.getMainCategories(user.id)
+        setCategorias(data)
       } catch (error) {
         console.error('Erro ao buscar categorias:', error)
       } finally {
         setLoading(false)
       }
     }
-
     fetchCategorias()
-  }, [user?.uid])
+  }, [user?.id])
 
   const getChartData = () => {
     const categoriasMap: { [key: string]: number } = {}
-    
-    transacoes.forEach(t => {
+
+    transacoes.forEach((t: any) => {
       if (t.valor && t.tipo === 'despesa') {
-        // Buscar o nome da categoria pelo category_id
-        const categoria = categorias.find(cat => cat.id === t.category_id)
-        const categoriaNome = categoria?.nome || 'Sem Categoria'
-        
+        // Buscar o nome da categoria pelo category_id (relacionamento carregado via service)
+        const categoriaNome = t?.categorias?.nome || 'Sem Categoria'
         categoriasMap[categoriaNome] = (categoriasMap[categoriaNome] || 0) + Math.abs(t.valor)
       }
     })
@@ -58,8 +52,8 @@ export function DashboardCharts({ transacoes }: DashboardChartsProps) {
   }
 
   const getPieData = () => {
-    const receitas = transacoes.filter(t => t.tipo === 'receita').reduce((sum, t) => sum + (t.valor || 0), 0)
-    const despesas = transacoes.filter(t => t.tipo === 'despesa').reduce((sum, t) => sum + (t.valor || 0), 0)
+    const receitas = transacoes.filter((t: any) => t.tipo === 'receita').reduce((sum: number, t: any) => sum + (t.valor || 0), 0)
+    const despesas = transacoes.filter((t: any) => t.tipo === 'despesa').reduce((sum: number, t: any) => sum + (t.valor || 0), 0)
 
     return [
       { name: 'Receitas', value: receitas },
@@ -67,8 +61,8 @@ export function DashboardCharts({ transacoes }: DashboardChartsProps) {
     ]
   }
 
-  const totalReceitas = transacoes.filter(t => t.tipo === 'receita').reduce((sum, t) => sum + (t.valor || 0), 0)
-  const totalDespesas = transacoes.filter(t => t.tipo === 'despesa').reduce((sum, t) => sum + (t.valor || 0), 0)
+  const totalReceitas = transacoes.filter((t: any) => t.tipo === 'receita').reduce((sum: number, t: any) => sum + (t.valor || 0), 0)
+  const totalDespesas = transacoes.filter((t: any) => t.tipo === 'despesa').reduce((sum: number, t: any) => sum + (t.valor || 0), 0)
   const saldo = totalReceitas - totalDespesas
 
   const stats = {
@@ -76,7 +70,7 @@ export function DashboardCharts({ transacoes }: DashboardChartsProps) {
     totalDespesas,
     saldo,
     transacoesCount: transacoes.length,
-    lembretesCount: 0 // This should come from props if needed
+    lembretesCount: 0
   }
 
   return (
@@ -177,15 +171,15 @@ export function DashboardCharts({ transacoes }: DashboardChartsProps) {
             <div className="border-t pt-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Saldo</span>
-                <span className={`font-bold ${stats.saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(stats.saldo)}
+                <span className={`font-bold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency(saldo)}
                 </span>
               </div>
             </div>
             <div className="pt-2 border-t">
               <div className="flex items-center justify-between text-sm">
                 <span>Total de Transações</span>
-                <span className="font-semibold">{stats.transacoesCount}</span>
+                <span className="font-semibold">{transacoes.length}</span>
               </div>
             </div>
           </div>

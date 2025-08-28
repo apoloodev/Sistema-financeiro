@@ -6,6 +6,7 @@ import { toast } from '@/hooks/use-toast'
 import { DashboardStats } from '@/components/dashboard/DashboardStats'
 import { DashboardFilters } from '@/components/dashboard/DashboardFilters'
 import type { Transacao } from '@/lib/supabase'
+import { DashboardCharts } from '@/components/dashboard/DashboardCharts'
 
 export default function Dashboard() {
   console.log('📊 Dashboard: Componente sendo renderizado')
@@ -127,6 +128,9 @@ export default function Dashboard() {
       />
       
       <DashboardStats stats={stats} />
+
+      {/* Gráficos do período */}
+      <DashboardCharts transacoes={filteredTransacoes} />
       
       <div className="text-center text-gray-500">
         <p>Dashboard funcionando com Supabase!</p>
